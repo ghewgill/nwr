@@ -491,7 +491,7 @@ bool Client::notifyRead()
 #ifdef TRACE
 printf("Client::notifyRead\n");
 #endif
-    int n = read(fd, request+index, sizeof(request)-index);
+    int n = read(fd, request+index, sizeof(request)-index-1);
     if (n <= 0) {
         if (n < 0) {
             perror("read");
@@ -501,25 +501,42 @@ printf("Client::notifyRead\n");
     index += n;
     //printf("header: %.*s", Clients[i].index, Clients[i].request);
     if (index > 4 && strncmp(request+index-4, "\r\n\r\n", 4) == 0 || strncmp(request+index-2, "\n\n", 2) == 0) {
-        char buf[1024];
-        snprintf(buf, sizeof(buf),
-            "ICY 200 OK\r\n"
-            "Content-Type: audio/mpeg\r\n"
-            "icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
-            "icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
-            "icy-name: NOAA Weather Radio: Austin, TX (WXK27 162.400 MHz)\r\n"
-            "icy-genre: Weather\r\n"
-            "icy-url: http://weather.hewgill.net\r\n"
-            "icy-pub: 1\r\n"
-            "icy-br: 16\r\n"
-            "\r\n");
-        n = write(fd, buf, strlen(buf));
+        request[index] = 0;
+        char *method = strtok(request, " ");
+        char *url = strtok(NULL, " ");
+        char response[1024];
+        if (strcmp(url, "/") == 0) {
+            snprintf(response, sizeof(response),
+                "ICY 200 OK\r\n"
+                "Content-Type: audio/mpeg\r\n"
+                //"icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
+                //"icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
+                "icy-name: NOAA Weather Radio: Austin, TX (WXK27 162.400 MHz)\r\n"
+                "icy-genre: Weather\r\n"
+                "icy-url: http://weather.hewgill.net\r\n"
+                "icy-pub: 1\r\n"
+                "icy-br: 16\r\n"
+                "\r\n");
+        } else if (strcmp(url, "/playlist.pls") == 0) {
+            snprintf(response, sizeof(response),
+                "HTTP/1.0 200 OK\r\n"
+                "Content-Type: audio/x-scpls\r\n"
+                "\r\n"
+                "[playlist]\r\n"
+                "numberofentries=1\r\n"
+                "File1=http://weather.hewgill.net:8001\r\n");
+        }
+        n = write(fd, response, strlen(response));
         if (n <= 0) {
             perror("write");
             return false;
         }
-        streaming = true;
-        tail = BufferHead;
+        if (strcmp(method, "GET") == 0 && strcmp(url, "/") == 0) {
+            streaming = true;
+            tail = BufferHead;
+        } else {
+            return false;
+        }
     }
     return true;
 }
