@@ -11,12 +11,13 @@ public:
     SigC::Signal1<void, const char *> activate;
     SigC::Signal0<void> deactivate;
 private:
-    enum {CORRLEN = 9};
+    enum {CORRLEN = 18};
     enum {BPHASESTEP = (int)(0x10000/(1920e-6*11025))};
     float ref[2][2][CORRLEN];
     float overlapbuf[CORRLEN*2];
     int overlap;
     int bphase;
+    int bitcount;
     int lastbit;
 
     unsigned char byte;

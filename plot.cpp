@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < n/2; i++) {
             fprintf(outf, "%d %d\n", s, *(short *)&buf[i*2]);
             s++;
-            if (s >= 200) goto bail;
+            if (s >= 400) goto bail;
         }
     }
 bail:

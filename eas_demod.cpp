@@ -46,8 +46,89 @@ inline double corr9(const float *p, const float *q)
     return f;
 }
 
+inline double corr18(const float *p, const float *q)
+{
+    double f;
+    asm volatile ("flds (%1);\n\t"
+                  "fmuls (%2);\n\t"
+                  "flds 4(%1);\n\t"
+                  "fmuls 4(%2);\n\t"
+                  "flds 8(%1);\n\t"
+                  "fmuls 8(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 12(%1);\n\t"
+                  "fmuls 12(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 16(%1);\n\t"
+                  "fmuls 16(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 20(%1);\n\t"
+                  "fmuls 20(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 24(%1);\n\t"
+                  "fmuls 24(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 28(%1);\n\t"
+                  "fmuls 28(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 32(%1);\n\t"
+                  "fmuls 32(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 36(%1);\n\t"
+                  "fmuls 36(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 40(%1);\n\t"
+                  "fmuls 40(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 44(%1);\n\t"
+                  "fmuls 44(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 48(%1);\n\t"
+                  "fmuls 48(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 52(%1);\n\t"
+                  "fmuls 52(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 56(%1);\n\t"
+                  "fmuls 56(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 60(%1);\n\t"
+                  "fmuls 60(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 64(%1);\n\t"
+                  "fmuls 64(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "flds 68(%1);\n\t"
+                  "fmuls 68(%2);\n\t"
+                  "fxch %%st(2);\n\t"
+                  "faddp;\n\t"
+                  "faddp;\n\t" :
+                  "=t" (f) :
+                  "r" (p),
+                  "r" (q) : "memory");
+    return f;
+}
+
 inline double corr(const float *p, const float *q, int n)
 {
+    if (n == 18) {
+        return corr18(p, q);
+    }
     if (n == 9) {
         return corr9(p, q);
     }
@@ -70,6 +151,7 @@ Demodulator::Demodulator()
     }
     overlap = 0;
     bphase = 0;
+    bitcount = 0;
     lastbit = 0;
     bits = 0;
     samebytes = 0;
@@ -116,8 +198,17 @@ int Demodulator::gotsamples(const float *buf, int n)
         double d = (c10*c10 + c11*c11) - (c00*c00 + c01*c01);
         int bit = d > 0;
         //printf("%d", bit);
+        if (bit) {
+            if (bitcount < 6) {
+                bitcount++;
+            }
+        } else {
+            if (bitcount > -6) {
+                bitcount--;
+            }
+        }
         if (bit != lastbit) {
-            if (bphase < 0x8000) {
+            if (bphase < 0x6000) {
                 bphase += BPHASESTEP/8;
             } else {
                 bphase -= BPHASESTEP/8;
@@ -127,7 +218,8 @@ int Demodulator::gotsamples(const float *buf, int n)
         bphase += BPHASESTEP;
         if (bphase >= 0x10000) {
             bphase &= 0xffff;
-            gotbit(bit);
+            //printf("(%d)", bitcount);
+            gotbit(bitcount > 0);
         }
         buf++;
         n--;
@@ -189,7 +281,7 @@ void Demodulator::gotbit(int b)
 
 void Demodulator::gotbyte(unsigned char c)
 {
-    //printf("%c", c);
+    //printf("\n%c\n", c);
     //printf("%d.%d ", hindex, dashstate);
     if (c == 0) {
         if (hindex > 0) {
