@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
         char buf[4096];
         int n = read(fd, buf, sizeof(buf));
         if (n == 0) {
+            fprintf(stderr, "rec: eof on input\n");
             break;
         }
         fwrite(buf, 1, n, f);

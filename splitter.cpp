@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
             perror("read");
             break;
         } else if (n == 0) {
+            fprintf(stderr, "splitter: eof on input\n");
             break;
         }
         for (int i = 0; i < nfds; i++) {

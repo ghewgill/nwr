@@ -172,6 +172,7 @@ printf("RawInputStream::notifyRead\n");
         perror("read");
         exit(1);
     } else if (n == 0) {
+        fprintf(stderr, "streamer: eof on input\n");
         exit(0);
     }
     //printf("read raw %d\n", n);
@@ -235,6 +236,7 @@ bool TitleMonitor::notifyRead()
         if (buf[i] == '\n') {
             Title = title;
             title.erase();
+            printf("Title: %s\n", Title.c_str());
         } else {
             title += buf[i];
         }

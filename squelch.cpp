@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
         char buf[4096];
         int n = fread(buf, 1, sizeof(buf), stdin);
         if (n == 0) {
+            fprintf(stderr, "squelch: eof on input\n");
             break;
         }
         for (int i = 0; i < n/2; i++) {
