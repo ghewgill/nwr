@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./rec - | ./squelch 10 | ./splitter ./streamer './decode -' './log /public/greg/nwr'
+./rec -s - | ./demux "./splitter ./streamer './decode -' './log /public/greg/nwr/wxk27'" "cat >/dev/null"

@@ -2,7 +2,7 @@
 .SH NAME
 rec \- record from audio device
 .SH SYNOPSIS
-.B rec
+.B rec [-s]
 .I file
 .SH DESCRIPTION
 .B rec
@@ -11,6 +11,9 @@ opens an audio device and writes sample data to
 If
 .I file
 is \-, then write to stdout.
+.SH OPTIONS
+.IP -s
+Record both left and right stereo channels.
 .SH FILES
 .I /dev/dsp
 .RS

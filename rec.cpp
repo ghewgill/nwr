@@ -7,11 +7,24 @@
 
 int main(int argc, char *argv[])
 {
+    bool stereo = false;
+    int a = 1;
+    while (a < argc && argv[a][0] == '-' && argv[a][1] != 0) {
+        switch (argv[a][1]) {
+        case 's':
+            stereo = true;
+            break;
+        default:
+            fprintf(stderr, "%s: unknown option %c\n", argv[0], argv[a][1]);
+            exit(1);
+        }
+        a++;
+    }
     FILE *f;
-    if (strcmp(argv[1], "-") == 0) {
+    if (strcmp(argv[a], "-") == 0) {
         f = stdout;
     } else {
-        f = fopen(argv[1], "wb");
+        f = fopen(argv[a], "wb");
         if (f == NULL) {
             perror("fopen");
             exit(1);
@@ -31,13 +44,13 @@ int main(int argc, char *argv[])
         perror("ioctl: SNDCTL_DSP_SETFMT");
         exit(1);
     }
-    sndparam = 0;
+    sndparam = stereo;
     if (ioctl(fd, SNDCTL_DSP_STEREO, &sndparam) == -1) {
         perror("ioctl: SNDCTL_DSP_STEREO");
         exit(1);
     }
-    if (sndparam != 0) {
-        fprintf(stderr, "gen: Error, cannot set the channel number to 0\n");
+    if (sndparam != stereo) {
+        fprintf(stderr, "rec: Error, cannot set the channel number to %d\n", stereo);
         exit(1);
     }
     int sample_rate = 11025;
