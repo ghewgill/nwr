@@ -45,6 +45,9 @@ struct {
     10
 };
 
+#ifdef TRACE
+bool Trace;
+#endif
 FILE *Log;
 string Title;
 
@@ -81,6 +84,16 @@ void filter(pid_t &filterpid, int &filterin, int &filterout)
     filterpid = child;
     filterin = pin[1];
     filterout = pout[0];
+
+    // Make the input to the filter nonblocking, so we will never
+    // deadlock due to reading and writing from the same process.
+    // The worst effect of this will be short skips as filter input
+    // is dropped on the floor.
+    int one = 1;
+    if (ioctl(filterin, FIONBIO, &one) != 0) {
+        perror("ioctl");
+        exit(1);
+    }
 }
 
 string HttpEscape(const string &s)
@@ -243,7 +256,7 @@ private:
 bool RawInputStream::notifyRead()
 {
 #ifdef TRACE
-printf("RawInputStream::notifyRead\n");
+if (Trace) printf("%d RawInputStream::notifyRead\n", getpid());
 #endif
     char buf[4096];
     ssize_t n = read(0, buf, sizeof(buf));
@@ -254,11 +267,24 @@ printf("RawInputStream::notifyRead\n");
         fprintf(stderr, "streamer: eof on input\n");
         exit(0);
     }
-    //printf("read raw %d\n", n);
+#ifdef TRACE
+if (Trace) printf("%d read raw %d\n", getpid(), n);
+#endif
     if (filterin != -1) {
-        write(filterin, buf, n);
+        ssize_t r = write(filterin, buf, n);
+        if (r < n) {
+            perror("filterin write");
+        }
     }
-    write(monitorin, buf, n);
+#ifdef TRACE
+if (Trace) printf("%d after filter write\n", getpid());
+#endif
+    if (monitorin != -1) {
+        write(monitorin, buf, n);
+    }
+#ifdef TRACE
+if (Trace) printf("%d after monitor write\n", getpid());
+#endif
     return true;
 }
 
@@ -326,7 +352,7 @@ bool TitleMonitor::notifyRead()
 bool FilteredInputStream::notifyRead()
 {
 #ifdef TRACE
-printf("FilteredInputStream::notifyRead\n");
+if (Trace) printf("%d FilteredInputStream::notifyRead\n", getpid());
 #endif
     assert(BufferHead < BUFSIZE);
     ssize_t n = read(filterout, Buffer+BufferHead, BUFSIZE-BufferHead);
@@ -388,7 +414,7 @@ Listener::~Listener()
 bool Listener::notifyRead()
 {
 #ifdef TRACE
-printf("Listener::notifyRead\n");
+if (Trace) printf("%d Listener::notifyRead\n", getpid());
 #endif
     sockaddr_in peer;
     socklen_t n = sizeof(peer);
@@ -438,7 +464,7 @@ int ShoutcastDirectory::getfd()
     if (time(0) >= nextupdate) {
         nextupdate = time(0) + 60;
 #ifdef TRACE
-printf("updating directory\n");
+if (Trace) printf("%d updating directory\n", getpid());
 #endif
         s = socket(AF_INET, SOCK_STREAM, 0);
         int one = 1;
@@ -473,7 +499,7 @@ bool ShoutcastDirectory::needWritable()
 bool ShoutcastDirectory::notifyRead()
 {
 #ifdef TRACE
-printf("ShoutcastDirectory::notifyRead\n");
+if (Trace) printf("%d ShoutcastDirectory::notifyRead\n", getpid());
 #endif
     ssize_t n = read(s, buf+index, sizeof(buf)-index-1);
     if (n <= 0) {
@@ -536,7 +562,7 @@ bool ShoutcastDirectory::notifyWrite()
         return true;
     }
 #ifdef TRACE
-printf("connected\n");
+if (Trace) printf("%d connected\n", getpid());
 #endif
     connected = true;
     index = 0;
@@ -592,7 +618,7 @@ bool Client::needWritable()
 bool Client::notifyRead()
 {
 #ifdef TRACE
-printf("Client::notifyRead\n");
+if (Trace) printf("%d Client::notifyRead\n", getpid());
 #endif
     int n = read(fd, request+index, sizeof(request)-index-1);
     if (n <= 0) {
@@ -608,6 +634,7 @@ printf("Client::notifyRead\n");
         char *method = strtok(request, " ");
         char *url = strtok(NULL, " ");
         char response[1024];
+        bool streamit = false;
         if (strcmp(url, "/") == 0) {
             snprintf(response, sizeof(response),
                 "ICY 200 OK\r\n"
@@ -625,6 +652,39 @@ printf("Client::notifyRead\n");
                 Config.Genre.c_str(),
                 Config.URL.c_str()
             );
+            streamit = true;
+        } else if (strcmp(url, "/nwr.spx") == 0) {
+            snprintf(response, sizeof(response),
+                "HTTP/1.0 200 OK\r\n"
+                "Content-Type: %s\r\n"
+                "ice-name: %s\r\n"
+                "ice-genre: %s\r\n"
+                "ice-url: %s\r\n"
+                "ice-public: 1\r\n"
+                "ice-bitrate: 16\r\n"
+                "\r\n",
+                Config.ContentType.c_str(),
+                Config.Name.c_str(),
+                Config.Genre.c_str(),
+                Config.URL.c_str()
+            );
+            streamit = true;
+        } else if (strcmp(url, "/nwr.ogg") == 0) {
+            snprintf(response, sizeof(response),
+                "HTTP/1.0 200 OK\r\n"
+                "Content-Type: %s\r\n"
+                "ice-name: %s\r\n"
+                "ice-genre: %s\r\n"
+                "ice-url: %s\r\n"
+                "ice-public: 1\r\n"
+                "ice-bitrate: 16\r\n"
+                "\r\n",
+                Config.ContentType.c_str(),
+                Config.Name.c_str(),
+                Config.Genre.c_str(),
+                Config.URL.c_str()
+            );
+            streamit = true;
         } else if (strcmp(url, "/playlist.pls") == 0) {
             snprintf(response, sizeof(response),
                 "HTTP/1.0 200 OK\r\n"
@@ -635,13 +695,17 @@ printf("Client::notifyRead\n");
                 "File1=http://%s:%d\r\n",
                 Config.Server.c_str(),
                 Config.Port);
+        } else {
+            snprintf(response, sizeof(response),
+                "HTTP/1.0 404 Not Found\r\n"
+                "\r\n");
         }
         n = write(fd, response, strlen(response));
         if (n <= 0) {
             perror("write");
             return false;
         }
-        if (strcmp(method, "GET") == 0 && strcmp(url, "/") == 0) {
+        if (strcmp(method, "GET") == 0 && streamit) {
             streaming = true;
             tail = BufferHead;
         } else {
@@ -693,6 +757,11 @@ int main(int argc, char *argv[])
                 config = argv[a];
             }
             break;
+#ifdef TRACE
+        case 't':
+            Trace = true;
+            break;
+#endif
         default:
             fprintf(stderr, "%s: unknown option %c\n", argv[0], argv[a][1]);
             exit(1);
@@ -715,7 +784,7 @@ int main(int argc, char *argv[])
         FD_ZERO(&wfds);
         int maxfd = -1;
 #ifdef TRACE
-printf("setup\n");
+if (Trace) printf("%d setup\n", getpid());
 #endif
         for (list<Stream *>::iterator i = Clients.begin(); i != Clients.end(); i++) {
             int fd = (*i)->getfd();
@@ -735,7 +804,7 @@ printf("setup\n");
             }
         }
 #ifdef TRACE
-printf("select\n");
+if (Trace) printf("%d select\n", getpid());
 #endif
         assert(maxfd >= 0);
         int r = select(maxfd+1, &rfds, &wfds, NULL, NULL);
@@ -744,7 +813,7 @@ printf("select\n");
             break;
         }
 #ifdef TRACE
-printf("identify\n");
+if (Trace) printf("%d identify\n", getpid());
 #endif
         vector<Stream *> readables, writables;
         for (list<Stream *>::iterator i = Clients.begin(); i != Clients.end(); i++) {
@@ -760,7 +829,7 @@ printf("identify\n");
             }
         }
 #ifdef TRACE
-printf("handle read\n");
+if (Trace) printf("%d handle read\n", getpid());
 #endif
         for (vector<Stream *>::iterator i = readables.begin(); i != readables.end(); i++) {
             if (!(*i)->notifyRead()) {
@@ -779,7 +848,7 @@ printf("handle read\n");
             }
         }
 #ifdef TRACE
-printf("handle write\n");
+if (Trace) printf("%d handle write\n", getpid());
 #endif
         for (vector<Stream *>::iterator i = writables.begin(); i != writables.end(); i++) {
             if (!(*i)->notifyWrite()) {
@@ -788,8 +857,10 @@ printf("handle write\n");
             }
         }
 #ifdef TRACE
-printf("TotalClients=%d (%d)\n", TotalClients, Clients.size());
-printf("filterin=%d filterout=%d\n", filterin, filterout);
+if (Trace) {
+    printf("%d TotalClients=%d (%d)\n", getpid(), TotalClients, Clients.size());
+    printf("filterin=%d filterout=%d\n", filterin, filterout);
+}
 #endif
         if (filterin == -1 && TotalClients > 0) {
             printf("starting filter\n");
@@ -808,7 +879,11 @@ printf("filterin=%d filterout=%d\n", filterin, filterout);
             }
             filterpid = 0;
         }
+#ifdef TRACE
+        printf(" %d %ld %d %s\n", getpid(), time(0), TotalClients, config.c_str());
+#else
         printf(" %ld %d\r", time(0), TotalClients);
+#endif
         fflush(stdout);
     }
     return 0;
