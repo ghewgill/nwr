@@ -189,6 +189,7 @@ bool eas::Decode(const char *s, Message &message)
     tt->tm_hour = atoi(matches[7]);
     tt->tm_min = atoi(matches[8]);
     tt->tm_sec = 0;
+    message.raw = s;
     message.originator = matches[1];
     message.originator_desc = getOriginatorDesc(message.originator);
     message.event = matches[2];

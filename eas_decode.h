@@ -4,6 +4,7 @@
 namespace eas {
 
 struct Message {
+    std::string raw;
     std::string originator;
     std::string originator_desc;
     std::string event;
