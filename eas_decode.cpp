@@ -83,9 +83,27 @@ static string getEventDesc(const string &event)
     return d->desc;
 }
 
+struct County {
+    int fips;
+    const char *name;
+};
+static const County Counties[] = {
+    #include "fips.inc"
+};
+
+static int fipscompare(const void *p1, const void *p2)
+{
+    return ((County *)p2)->fips - *(int *)p1;
+}
+
 static string getAreaDesc(const eas::Message::Area &area)
 {
-    return string();
+    int fips = 1000 * area.state + area.county;
+    County *c = (County *)bsearch(&fips, Counties, sizeof(Counties)/sizeof(Counties[0]), sizeof(Counties[0]), fipscompare);
+    if (c == NULL) {
+        return string();
+    }
+    return c->name;
 }
 
 static string getSenderDesc(const string &sender)

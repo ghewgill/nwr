@@ -23,3 +23,8 @@ streamer_SOURCES = streamer.cpp
 splitter_SOURCES = splitter.cpp
 
 monitor_SOURCES = monitor.cpp eas_demod.cpp eas_decode.cpp
+
+eas_decode.cpp: fips.inc
+
+fips.inc: ../emwin/data/county.dump fips2inc.pl
+	perl fips2inc.pl ../emwin/data/county.dump >$@
