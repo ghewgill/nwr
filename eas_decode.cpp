@@ -93,7 +93,7 @@ static const County Counties[] = {
 
 static int fipscompare(const void *p1, const void *p2)
 {
-    return ((County *)p2)->fips - *(int *)p1;
+    return *(int *)p1 - ((County *)p2)->fips;
 }
 
 static string getAreaDesc(const eas::Message::Area &area)
@@ -116,8 +116,8 @@ bool eas::Decode(const char *s, Message &message)
     const char *errptr;
     int erroffset;
     pcre *re = pcre_compile(
-        "^ZCZC-(\\w+)-(\\w+)(-[^+-]+){1,31}\\+(\\d{2})(\\d{2})-(\\d{3})(\\d{2})(\\d{2})-([^-]+)-",
-        //     1      2     3                 4       5        6       7       8        9
+        "^ZCZC-(\\w+)-(\\w+)((?:-[^+-]+){1,31})\\+(\\d{2})(\\d{2})-(\\d{3})(\\d{2})(\\d{2})-([^-]+)-",
+        //     1      2     3                     4       5        6       7       8        9
         0,
         &errptr,
         &erroffset,
@@ -162,6 +162,9 @@ bool eas::Decode(const char *s, Message &message)
     string a;
     for (const char *p = matches[3]; ; p++) {
         if (*p == '-' || *p == 0) {
+            if (*p == '-') {
+                p++;
+            }
             if (!a.empty()) {
                 Message::Area area;
                 area.code = a;
