@@ -333,7 +333,7 @@ void eas_activate(const char *s)
     Message = message;
     struct tm *tt = gmtime(&message.issued);
     char fn[40];
-    snprintf(fn, sizeof(fn), "%04d%02d%02d%s%s-%s-%s",
+    snprintf(fn, sizeof(fn), "%04d%02d%02d%02d%02d-%s-%s",
         1900+tt->tm_year,
         1+tt->tm_mon,
         tt->tm_mday,
@@ -382,6 +382,7 @@ int main(int argc, char *argv[])
         char buf[4096];
         int n = fread(buf, 1, sizeof(buf), f);
         if (n == 0) {
+            fprintf(stderr, "decode: eof on input\n");
             break;
         }
         float fbuf[sizeof(buf)/2];
