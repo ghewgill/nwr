@@ -46,7 +46,7 @@ void filter(pid_t &filterpid, int &filterin, int &filterout)
         close(pin[1]);
         dup2(pout[1], 1);
         close(pout[0]);
-        execl("/bin/sh", "sh", "-c", "lame -r -m m -s 22.05 -x -b 16 -q 9 - -", NULL);
+        execl("/bin/sh", "sh", "-c", "lame -r -m m -s 11.025 -x -b 16 -q 9 - -", NULL);
         perror("execl");
         exit(127);
     }

@@ -16,7 +16,7 @@
 using namespace std;
 using namespace SigC;
 
-inline double corr18(const float *p, const float *q)
+inline double corr9(const float *p, const float *q)
 {
     double f;
     asm volatile ("flds (%1);\n\t"
@@ -51,42 +51,6 @@ inline double corr18(const float *p, const float *q)
                   "fmuls 32(%2);\n\t"
                   "fxch %%st(2);\n\t"
                   "faddp;\n\t"
-                  "flds 36(%1);\n\t"
-                  "fmuls 36(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 40(%1);\n\t"
-                  "fmuls 40(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 44(%1);\n\t"
-                  "fmuls 44(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 48(%1);\n\t"
-                  "fmuls 48(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 52(%1);\n\t"
-                  "fmuls 52(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 56(%1);\n\t"
-                  "fmuls 56(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 60(%1);\n\t"
-                  "fmuls 60(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 64(%1);\n\t"
-                  "fmuls 64(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 68(%1);\n\t"
-                  "fmuls 68(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
                   "faddp;\n\t" :
                   "=t" (f) :
                   "r" (p),
@@ -96,8 +60,8 @@ inline double corr18(const float *p, const float *q)
 
 inline double corr(const float *p, const float *q, int n)
 {
-    if (n == 18) {
-        return corr18(p, q);
+    if (n == 9) {
+        return corr9(p, q);
     }
     double s = 0;
     while (n--) {
@@ -113,8 +77,8 @@ public:
     Signal1<void, const char *> activate;
     Signal0<void> deactivate;
 private:
-    enum {CORRLEN = 18};
-    enum {BPHASESTEP = (int)(0x10000/(1920e-6*22050))};
+    enum {CORRLEN = 9};
+    enum {BPHASESTEP = (int)(0x10000/(1920e-6*11025))};
     float ref[2][2][CORRLEN];
     float overlapbuf[CORRLEN*2];
     int overlap;
@@ -143,10 +107,10 @@ Decoder::Decoder()
     double f0 = 2*M_PI*(3/1920e-6);
     double f1 = 2*M_PI*(4/1920e-6);
     for (int i = 0; i < CORRLEN; i++) {
-        ref[0][0][i] = sin(i/22050.0*f0);
-        ref[0][1][i] = cos(i/22050.0*f0);
-        ref[1][0][i] = sin(i/22050.0*f1);
-        ref[1][1][i] = cos(i/22050.0*f1);
+        ref[0][0][i] = sin(i/11025.0*f0);
+        ref[0][1][i] = cos(i/11025.0*f0);
+        ref[1][0][i] = sin(i/11025.0*f1);
+        ref[1][1][i] = cos(i/11025.0*f1);
     }
     overlap = 0;
     bphase = 0;
@@ -421,7 +385,7 @@ Mp3Writer::Mp3Writer(const char fn[], int freq, int bits, int channels)
     if (child == 0) {
         dup2(pipeout[0], 0);
         close(pipeout[1]);
-        execl("/usr/local/bin/lame", "lame", "-r", "-m", "m", "-s", "22.05", "-x", "-b", "16", "-", fn, NULL);
+        execl("/usr/local/bin/lame", "lame", "-r", "-m", "m", "-s", "11.025", "-x", "-b", "16", "-", fn, NULL);
         perror("execl");
         exit(127);
     }
@@ -659,10 +623,10 @@ void eas_activate(const char *s)
         matches[1],
         matches[2]);
     pcre_free_substring_list(matches);
-    AudioSplitter *split = new AudioSplitter(22050, 16, 1);
-    split->plug(new WavWriter((string(fn)+".wav").c_str(), 22050, 16, 1));
+    AudioSplitter *split = new AudioSplitter(11025, 16, 1);
+    split->plug(new WavWriter((string(fn)+".wav").c_str(), 11025, 16, 1));
     mp3name = string(fn)+".mp3";
-    split->plug(new Mp3Writer(mp3name.c_str(), 22050, 16, 1));
+    split->plug(new Mp3Writer(mp3name.c_str(), 11025, 16, 1));
     rec = split;
 }
 

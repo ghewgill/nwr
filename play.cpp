@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "gen: Error, cannot set the channel number to 0\n");
         exit(1);
     }
-    int sample_rate = 22050;
+    int sample_rate = 11025;
     sndparam = sample_rate;
     if (ioctl(fd, SNDCTL_DSP_SPEED, &sndparam) == -1) {
         perror("ioctl: SNDCTL_DSP_SPEED");

@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
         perror("fopen");
         exit(1);
     }
-    Encoder encoder(f, 22050);
+    Encoder encoder(f, 11025);
     encoder.encode("\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB\xAB");
     encoder.encode(argv[2]);
     fclose(f);
