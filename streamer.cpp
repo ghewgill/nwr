@@ -32,7 +32,12 @@ struct {
     string IRC;
     string AIM;
     string ICQ;
-} Config;
+} Config = {
+    "localhost",
+    8001,
+    "streamer.log",
+    10
+};
 
 FILE *Log;
 string Title;
@@ -671,7 +676,9 @@ int main(int argc, char *argv[])
     Clients.push_back(new RawInputStream());
     Clients.push_back(new TitleMonitor());
     Clients.push_back(new Listener());
-    Clients.push_back(new ShoutcastDirectory());
+    if (!Config.Name.empty()) {
+        Clients.push_back(new ShoutcastDirectory());
+    }
     for (;;) {
         fd_set rfds;
         fd_set wfds;
