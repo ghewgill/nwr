@@ -21,6 +21,8 @@ using namespace std;
 const int BUFSIZE = 65536;
 const int MAXCLIENTS = 10;
 
+FILE *Log;
+
 char Buffer[BUFSIZE];
 int BufferHead;
 int filterpid;
@@ -110,7 +112,7 @@ private:
 
 class Client: public Stream {
 public:
-    Client(int f);
+    Client(int f, in_addr p);
     virtual ~Client();
     virtual int getfd() { return fd; }
     virtual bool needWritable();
@@ -118,7 +120,9 @@ public:
     virtual bool notifyWrite();
     virtual bool checkOverflow(int n);
 private:
-    int fd;
+    const int fd;
+    const in_addr peer;
+    const time_t start;
     bool streaming;
     int tail;
     char request[1024];
@@ -218,10 +222,12 @@ printf("Listener::notifyRead\n");
     if (t < 0) {
         perror("accept");
     } else if (TotalClients >= MAXCLIENTS) {
-        printf("%s turned away\n", inet_ntoa(peer.sin_addr));
         close(t);
+        printf("%s turned away\n", inet_ntoa(peer.sin_addr));
+        fprintf(Log, "%ld %s turned away\n", time(0), inet_ntoa(peer.sin_addr));
+        fflush(Log);
     } else {
-        Clients.push_back(new Client(t));
+        Clients.push_back(new Client(t, peer.sin_addr));
         printf("%s connected\n", inet_ntoa(peer.sin_addr));
     }
     return true;
@@ -264,7 +270,7 @@ printf("updating directory\n");
         sockaddr_in ds;
         ds.sin_family = AF_INET;
         ds.sin_port = htons(80);
-        ds.sin_addr.s_addr = inet_addr("205.188.234.88");
+        ds.sin_addr.s_addr = inet_addr("205.188.234.56");
         connect(s, (sockaddr *)&ds, sizeof(ds));
         if (errno != EINPROGRESS) {
             perror("connect");
@@ -290,28 +296,32 @@ printf("ShoutcastDirectory::notifyRead\n");
 #endif
     ssize_t n = read(s, buf+index, sizeof(buf)-index-1);
     if (n <= 0) {
-        assert(index < (ssize_t)sizeof(buf));
-        buf[index] = 0;
         if (n < 0) {
             perror("read");
-        } else if (id == 0) {
-            printf("%s\n", buf);
-            const char *p = strstr(buf, "icy-id:");
-            if (p != NULL) {
-                id = atoi(p+7);
-            }
-            p = strstr(buf, "icy-tchfrq:");
-            if (p != NULL) {
-                refresh = atoi(p+11) * 60;
+        } else {
+            assert(index < (ssize_t)sizeof(buf));
+            buf[index] = 0;
+            if (strstr(buf, "icy-response: ack") == NULL) {
+                printf("%s\n", buf);
             }
             if (id == 0) {
-                nextupdate = time(0) + 300;
+                const char *p = strstr(buf, "icy-id:");
+                if (p != NULL) {
+                    id = atoi(p+7);
+                }
+                p = strstr(buf, "icy-tchfrq:");
+                if (p != NULL) {
+                    refresh = atoi(p+11) * 60;
+                }
+                if (id == 0) {
+                    nextupdate = time(0) + 300;
+                } else {
+                    printf("stream id %d (refresh %d)\n", id, refresh);
+                    nextupdate = time(0);
+                }
             } else {
-                printf("stream id %d (refresh %d)\n", id, refresh);
-                nextupdate = time(0);
+                nextupdate = time(0) + refresh;
             }
-        } else {
-            nextupdate = time(0) + refresh;
         }
         close(s);
         s = -1;
@@ -344,11 +354,15 @@ printf("connected\n");
     index = 0;
     char buf[1024];
     if (id == 0) {
-        snprintf(buf, sizeof(buf), "GET /addsrv?v=1&br=16&p=8001&m=10&t=NOAA+National+Weather+Radio+WXK27+Austin,+TX&g=Weather&url=http%3A%2F%2Fweather.hewgill.net&irc=&aim=&icq= HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n");
+        snprintf(buf, sizeof(buf), "GET /addsrv?v=1&br=16&p=8001&m=10&t=NOAA+Weather+Radio:+Austin,+TX+(WXK27+162.400+MHz)&g=Weather&url=http%3A%2F%2Fweather.hewgill.net&irc=&aim=&icq= HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n");
     } else {
-        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=8001&li=%d&alt=0&ct=Weather+Radio HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
-        id,
-        TotalClients);
+        time_t now = time(0);
+        struct tm *tt = gmtime(&now);
+        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=8001&li=%d&alt=0&ct=Weather+Radio+%02d:%02d+UTC HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
+            id,
+            TotalClients,
+            tt->tm_hour,
+            tt->tm_min);
     }
     if (write(s, buf, strlen(buf)) < (ssize_t)strlen(buf)) {
         perror("write");
@@ -359,16 +373,20 @@ printf("connected\n");
     return true;
 }
 
-Client::Client(int f)
- : fd(f), streaming(false), index(0)
+Client::Client(int f, in_addr p)
+ : fd(f), peer(p), start(time(0)), streaming(false), index(0)
 {
     TotalClients++;
+    fprintf(Log, "%ld %s connected\n", time(0), inet_ntoa(peer));
+    fflush(Log);
 }
 
 Client::~Client()
 {
     close(fd);
     TotalClients--;
+    fprintf(Log, "%ld %s disconnected (%ld seconds)\n", time(0), inet_ntoa(peer), time(0)-start);
+    fflush(Log);
 }
 
 bool Client::needWritable()
@@ -397,7 +415,7 @@ printf("Client::notifyRead\n");
             "Content-Type: audio/mpeg\r\n"
             "icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
             "icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
-            "icy-name: NOAA National Weather Radio WXK27 Austin, TX\r\n"
+            "icy-name: NOAA Weather Radio: Austin, TX (WXK27 162.400 MHz)\r\n"
             "icy-genre: Weather\r\n"
             "icy-url: http://weather.hewgill.net\r\n"
             "icy-pub: 1\r\n"
@@ -445,6 +463,7 @@ bool Client::checkOverflow(int n)
 int main(int argc, char *argv[])
 {
     signal(SIGPIPE, SIG_IGN);
+    Log = fopen("streamer.log", "a");
     Clients.push_back(new RawInputStream());
     Clients.push_back(new Listener());
     Clients.push_back(new ShoutcastDirectory());
