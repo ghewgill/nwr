@@ -26,6 +26,7 @@ struct {
     int Port;
     string Log;
     string Encoder;
+    string ContentType;
     int MaxClients;
     string Name;
     string Genre;
@@ -38,6 +39,7 @@ struct {
     8001,
     "streamer.log",
     "lame -r -m m -s 11.025 -x -b 16 -q 9 - -",
+    "audio/mpeg",
     10
 };
 
@@ -105,6 +107,9 @@ void LoadConfig(const char *fn)
     }
     char buf[1024];
     while (fgets(buf, sizeof(buf), f) != NULL) {
+        if (buf[0] == '#') {
+            continue;
+        }
         const char *name = strtok(buf, " \t");
         if (name == NULL) {
             continue;
@@ -124,6 +129,8 @@ void LoadConfig(const char *fn)
             Config.Log = value;
         } else if (strcasecmp(name, "Encoder") == 0) {
             Config.Encoder = value;
+        } else if (strcasecmp(name, "Content-Type") == 0) {
+            Config.ContentType = value;
         } else if (strcasecmp(name, "MaxClients") == 0) {
             Config.MaxClients = atoi(value);
         } else if (strcasecmp(name, "Name") == 0) {
@@ -587,7 +594,7 @@ printf("Client::notifyRead\n");
         if (strcmp(url, "/") == 0) {
             snprintf(response, sizeof(response),
                 "ICY 200 OK\r\n"
-                "Content-Type: audio/mpeg\r\n"
+                "Content-Type: %s\r\n"
                 //"icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
                 //"icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
                 "icy-name: %s\r\n"
@@ -596,6 +603,7 @@ printf("Client::notifyRead\n");
                 "icy-pub: 1\r\n"
                 "icy-br: 16\r\n"
                 "\r\n",
+                Config.ContentType.c_str(),
                 Config.Name.c_str(),
                 Config.Genre.c_str(),
                 Config.URL.c_str()
