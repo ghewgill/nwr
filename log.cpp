@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
         if (n == 0) {
             break;
         }
-        fwrite(buf, 1, n, stdout);
         int hour = (time(0) / 3600) % 24;
         if (hour != lasthour) {
             if (log != NULL) {
@@ -29,9 +28,10 @@ int main(int argc, char *argv[])
             unlink(fn);
             snprintf(fn, sizeof(fn), "%s/NWR-%02d.raw", dir, hour);
             if (lasthour != -1) {
-                unlink(fn);
+                log = fopen(fn, "wb");
+            } else {
+                log = fopen(fn, "ab");
             }
-            log = fopen(fn, "ab");
             if (log == NULL) {
                 perror("fopen");
                 exit(1);
