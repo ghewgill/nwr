@@ -19,7 +19,6 @@ struct Description {
 
 static const Description Originators[] = {
     {"CIV", "Civil authorities"},
-    {"EAN", "Emergency Action Notification Network"},
     {"EAS", "Broadcast station or cable station"},
     {"PEP", "Primary Entry Point System"},
     {"WXR", "National Weather Service"},
