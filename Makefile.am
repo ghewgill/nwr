@@ -5,9 +5,9 @@ LDADD = @SIGC_LIBS@ @PQ_LIBS@
 bin_PROGRAMS = rec play squelch encode capture plot log streamer splitter monitor demux emailer insertdb
 
 htmldir = $(prefix)/html
-html_DATA = rec.html squelch.html capture.html log.html streamer.html splitter.html demux.html
+html_DATA = rec.html squelch.html capture.html log.html streamer.html splitter.html demux.html emailer.html
 
-man_MANS = rec.1 squelch.1 capture.1 log.1 streamer.1 splitter.1 demux.1
+man_MANS = rec.1 squelch.1 capture.1 log.1 streamer.1 splitter.1 demux.1 emailer.1
 
 EXTRA_DIST = $(man_MANS)
 
@@ -43,4 +43,5 @@ fips.inc: ../emwin/data/county.dump fips2inc.pl
 	perl fips2inc.pl ../emwin/data/county.dump >$@
 
 .1.html:
-	rman -f html $< >$@
+	true rman -f html $< >$@
+	nroff -man $< | man2html -topm 6 -compress -title '$< manual page' -cgiurl '$$title.html' | perl linkify.pl >$@
