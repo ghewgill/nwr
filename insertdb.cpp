@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     }
     PGresult *r = query("begin");
     PQclear(r);
-    int id = time(0);
+    int id = time(0); // BUG: not unique
     r = query("insert into message (id, station, raw, originator, event, issued, received, purge, sender, filename) values (%ld, upper('%s'), '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
         id,
         Station,
