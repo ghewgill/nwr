@@ -266,7 +266,7 @@ void email(const eas::Message &message, const char fn[])
             snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
             fprintf(f, "To: nwr-wxk27@hewgill.net\n");
             fprintf(f, "From: nwr-wxk27@hewgill.net\n");
-            fprintf(f, "Subject: %s\n", fn);
+            fprintf(f, "Subject: [NWR-WXK27] %s\n", fn);
             fprintf(f, "MIME-Version: 1.0\n");
             fprintf(f, "Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary);
             fprintf(f, "\n");
