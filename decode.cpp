@@ -15,6 +15,7 @@
 using namespace std;
 
 const char *LogFile = "eas.log";
+const char *Notify = "notify";
 
 class AudioWriter {
 public:
@@ -223,7 +224,7 @@ string timestr(time_t t)
 void email(const eas::Message &message, const char fn[])
 {
     set<string> Addresses;
-    FILE *f = fopen("notify", "r");
+    FILE *f = fopen(Notify, "r");
     if (f == NULL) {
         return;
     }
@@ -266,9 +267,9 @@ void email(const eas::Message &message, const char fn[])
         if (f != NULL) {
             char boundary[80];
             snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
-            fprintf(f, "To: nwr-wxk27@hewgill.net\n");
-            fprintf(f, "From: nwr-wxk27@hewgill.net\n");
-            fprintf(f, "Subject: [NWR-WXK27] %s\n", fn);
+            fprintf(f, "To: nwr@hewgill.net\n");
+            fprintf(f, "From: nwr@hewgill.net\n");
+            fprintf(f, "Subject: [NWR] %s\n", fn);
             fprintf(f, "MIME-Version: 1.0\n");
             fprintf(f, "Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary);
             fprintf(f, "\n");
@@ -388,6 +389,14 @@ int main(int argc, char *argv[])
             } else {
                 a++;
                 LogFile = argv[a];
+            }
+            break;
+        case 'n':
+            if (argv[a][2]) {
+                Notify = argv[a]+2;
+            } else {
+                a++;
+                Notify = argv[a];
             }
             break;
         default:

@@ -4,6 +4,8 @@ decode \- decode SAME signal from audio
 .SH SYNOPSIS
 .B decode [-l
 .I log-file
+.B ] [-n
+.I notify-file
 .B ]
 .I file
 .SH DESCRIPTION
@@ -23,6 +25,10 @@ audio compressor is used to create the MP3 files.
 .SH OPTIONS
 .IP "-l log-file"
 The log file to which EAS events will be written.
+.IP "-n notify-file"
+The list of email addresses,
+or shell commands preceded by |,
+to which email messages will be sent.
 .IP file
 The file that contains audio data. If \- is specified,
 read from stdin.
