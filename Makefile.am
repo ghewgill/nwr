@@ -2,7 +2,7 @@ CXXFLAGS = -g -Wall
 INCLUDES = @SIGC_CFLAGS@
 LDADD = @SIGC_LIBS@
 
-bin_PROGRAMS = rec play squelch encode decode plot log
+bin_PROGRAMS = rec play squelch encode decode plot log streamer splitter
 
 rec_SOURCES = rec.cpp
 
@@ -17,3 +17,7 @@ decode_SOURCES = decode.cpp
 plot_SOURCES = plot.cpp
 
 log_SOURCES = log.cpp
+
+streamer_SOURCES = streamer.cpp
+
+splitter_SOURCES = splitter.cpp
