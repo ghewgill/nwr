@@ -5,7 +5,7 @@ LDADD = @SIGC_LIBS@
 bin_PROGRAMS = rec play squelch encode decode plot log streamer splitter monitor demux
 
 htmldir = $(prefix)/html
-html_DATA = rec.html squelch.html decode.html log.html streamer.html splitter.html
+html_DATA = rec.html squelch.html decode.html log.html streamer.html splitter.html demux.html
 
 man_MANS = rec.1 squelch.1 decode.1 log.1 streamer.1 splitter.1 demux.1
 
