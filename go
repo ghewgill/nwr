@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./rec - | ./splitter ./streamer './decode -' './log /public/greg/nwr'
+./rec - | ./squelch 10 | ./splitter ./streamer './decode -' './log /public/greg/nwr'
