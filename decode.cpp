@@ -511,8 +511,8 @@ void base64(char *dest, const char *src, size_t n)
 void email(const char fn[])
 {
     set<string> Addresses;
-    //Addresses.insert("gregh@ud.com");
-    //Addresses.insert("moose@ud.com");
+    Addresses.insert("gregh@ud.com");
+    Addresses.insert("moose@ud.com");
     for (set<string>::const_iterator a = Addresses.begin(); a != Addresses.end(); a++) {
         printf("*** sending %s to %s\n", fn, a->c_str());
         int pipeout[2];
