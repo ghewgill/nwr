@@ -20,7 +20,18 @@
 using namespace std;
 
 const int BUFSIZE = 65536;
-const int MAXCLIENTS = 10;
+
+struct {
+    string Server;
+    int Port;
+    int MaxClients;
+    string Name;
+    string Genre;
+    string URL;
+    string IRC;
+    string AIM;
+    string ICQ;
+} Config;
 
 FILE *Log;
 string Title;
@@ -75,6 +86,52 @@ string HttpEscape(const string &s)
         }
     }
     return r;
+}
+
+void LoadConfig()
+{
+    FILE *f = fopen("streamer.conf", "r");
+    if (f == NULL) {
+        fprintf(stderr, "streamer: streamer.conf not found: (%d) %s\n", errno, strerror(errno));
+        exit(1);
+    }
+    char buf[1024];
+    while (fgets(buf, sizeof(buf), f) != NULL) {
+        const char *name = strtok(buf, " \t");
+        if (name == NULL) {
+            continue;
+        }
+        const char *value = strtok(NULL, "\n");
+        if (value == NULL) {
+            value = "";
+        } else {
+            value += strspn(value, " \t");
+        }
+        if (strcasecmp(name, "Server") == 0) {
+            Config.Server = value;
+            printf("Server: %s\n", value);
+        } else if (strcasecmp(name, "Port") == 0) {
+            Config.Port = atoi(value);
+        } else if (strcasecmp(name, "MaxClients") == 0) {
+            Config.MaxClients = atoi(value);
+        } else if (strcasecmp(name, "Name") == 0) {
+            Config.Name = value;
+        } else if (strcasecmp(name, "Genre") == 0) {
+            Config.Genre = value;
+        } else if (strcasecmp(name, "URL") == 0) {
+            Config.URL = value;
+        } else if (strcasecmp(name, "IRC") == 0) {
+            Config.IRC = value;
+        } else if (strcasecmp(name, "AIM") == 0) {
+            Config.AIM = value;
+        } else if (strcasecmp(name, "ICQ") == 0) {
+            Config.ICQ = value;
+        } else {
+            fprintf(stderr, "streamer: unknown config option: %s\n", name);
+            exit(1);
+        }
+    }
+    fclose(f);
 }
 
 class Stream {
@@ -287,7 +344,7 @@ Listener::Listener()
     }
     sockaddr_in addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8001);
+    addr.sin_port = htons(Config.Port);
     addr.sin_addr.s_addr = INADDR_ANY;
     if (bind(s, (sockaddr *)&addr, sizeof(addr)) != 0) {
         perror("bind");
@@ -316,7 +373,7 @@ printf("Listener::notifyRead\n");
     int t = accept(s, (sockaddr *)&peer, &n);
     if (t < 0) {
         perror("accept");
-    } else if (TotalClients >= MAXCLIENTS) {
+    } else if (TotalClients >= Config.MaxClients) {
         close(t);
         printf("%s turned away\n", inet_ntoa(peer.sin_addr));
         fprintf(Log, "%ld %s turned away\n", time(0), inet_ntoa(peer.sin_addr));
@@ -449,10 +506,20 @@ printf("connected\n");
     index = 0;
     char buf[1024];
     if (id == 0) {
-        snprintf(buf, sizeof(buf), "GET /addsrv?v=1&br=16&p=8001&m=10&t=NOAA+Weather+Radio:+Austin,+TX+(WXK27+162.400+MHz)&g=Weather&url=http%3A%2F%2Fweather.hewgill.net&irc=&aim=&icq= HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n");
+        snprintf(buf, sizeof(buf), "GET /addsrv?v=1&br=16&p=%d&m=%d&t=%s&g=%s&url=%s&irc=%s&aim=%s&icq=%s HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
+            Config.Port,
+            Config.MaxClients,
+            HttpEscape(Config.Name).c_str(),
+            HttpEscape(Config.Genre).c_str(),
+            HttpEscape(Config.URL).c_str(),
+            HttpEscape(Config.IRC).c_str(),
+            HttpEscape(Config.AIM).c_str(),
+            HttpEscape(Config.ICQ).c_str()
+        );
     } else {
-        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=8001&li=%d&alt=0&ct=%s HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
+        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=%d&li=%d&alt=0&ct=%s HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
             id,
+            Config.Port,
             TotalClients,
             HttpEscape(Title).c_str());
     }
@@ -511,12 +578,16 @@ printf("Client::notifyRead\n");
                 "Content-Type: audio/mpeg\r\n"
                 //"icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
                 //"icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
-                "icy-name: NOAA Weather Radio: Austin, TX (WXK27 162.400 MHz)\r\n"
-                "icy-genre: Weather\r\n"
-                "icy-url: http://weather.hewgill.net\r\n"
+                "icy-name: %s\r\n"
+                "icy-genre: %s\r\n"
+                "icy-url: %s\r\n"
                 "icy-pub: 1\r\n"
                 "icy-br: 16\r\n"
-                "\r\n");
+                "\r\n",
+                Config.Name.c_str(),
+                Config.Genre.c_str(),
+                Config.URL.c_str()
+            );
         } else if (strcmp(url, "/playlist.pls") == 0) {
             snprintf(response, sizeof(response),
                 "HTTP/1.0 200 OK\r\n"
@@ -524,7 +595,9 @@ printf("Client::notifyRead\n");
                 "\r\n"
                 "[playlist]\r\n"
                 "numberofentries=1\r\n"
-                "File1=http://weather.hewgill.net:8001\r\n");
+                "File1=http://%s:%d\r\n",
+                Config.Server.c_str(),
+                Config.Port);
         }
         n = write(fd, response, strlen(response));
         if (n <= 0) {
@@ -572,6 +645,7 @@ bool Client::checkOverflow(int n)
 int main(int argc, char *argv[])
 {
     signal(SIGPIPE, SIG_IGN);
+    LoadConfig();
     Log = fopen("streamer.log", "a");
     Clients.push_back(new RawInputStream());
     Clients.push_back(new TitleMonitor());
