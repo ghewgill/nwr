@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include <list>
+#include <string>
 #include <vector>
 
 //#define TRACE
@@ -22,12 +23,14 @@ const int BUFSIZE = 65536;
 const int MAXCLIENTS = 10;
 
 FILE *Log;
+string Title;
 
 char Buffer[BUFSIZE];
 int BufferHead;
 int filterpid;
 int filterin = -1;
 int filterout = -1;
+int monitorin = -1;
 
 void filter(pid_t &filterpid, int &filterin, int &filterout)
 {
@@ -57,6 +60,23 @@ void filter(pid_t &filterpid, int &filterin, int &filterout)
     filterout = pout[0];
 }
 
+string HttpEscape(const string &s)
+{
+    string r;
+    for (string::const_iterator i = s.begin(); i != s.end(); i++) {
+        if (isalnum(*i)) {
+            r += *i;
+        } else if (*i == ' ') {
+            r += '+';
+        } else {
+            char buf[4];
+            snprintf(buf, sizeof(buf), "%%%02X", *i);
+            r += buf;
+        }
+    }
+    return r;
+}
+
 class Stream {
 public:
     virtual ~Stream() {}
@@ -74,6 +94,18 @@ class RawInputStream: public Stream {
 public:
     virtual int getfd() { return 0; }
     virtual bool notifyRead();
+};
+
+class TitleMonitor: public Stream {
+public:
+    TitleMonitor();
+    virtual ~TitleMonitor();
+    virtual int getfd() { return monitorout; }
+    virtual bool notifyRead();
+private:
+    pid_t monitorpid;
+    int monitorout;
+    string title;
 };
 
 class FilteredInputStream: public Stream {
@@ -145,6 +177,67 @@ printf("RawInputStream::notifyRead\n");
     //printf("read raw %d\n", n);
     if (filterin != -1) {
         write(filterin, buf, n);
+    }
+    write(monitorin, buf, n);
+    return true;
+}
+
+TitleMonitor::TitleMonitor()
+{
+    int pin[2], pout[2];
+    if (pipe(pin) != 0 || pipe(pout) != 0) {
+        perror("pipe");
+        exit(1);
+    }
+    monitorpid = fork();
+    if (monitorpid == -1) {
+        perror("fork");
+        exit(1);
+    }
+    if (monitorpid == 0) {
+        dup2(pin[0], 0);
+        close(pin[1]);
+        dup2(pout[1], 1);
+        close(pout[0]);
+        execl("/bin/sh", "sh", "-c", "./monitor -", NULL);
+        perror("execl");
+        exit(127);
+    }
+    close(pin[0]);
+    close(pout[1]);
+    monitorin = pin[1];
+    monitorout = pout[0];
+}
+
+TitleMonitor::~TitleMonitor()
+{
+    close(monitorin);
+    int status;
+    if (waitpid(monitorpid, &status, 0) < 0) {
+        perror("waitpid");
+        exit(1);
+    }
+}
+
+bool TitleMonitor::notifyRead()
+{
+    char buf[256];
+    ssize_t n = read(monitorout, buf, sizeof(buf));
+    if (n <= 0) {
+        if (n < 0) {
+            perror("read");
+        }
+        close(filterout);
+        filterout = -1;
+        return false;
+    }
+    for (int i = 0; i < n; i++) {
+        if (buf[i] == '\n') {
+            Title = title;
+            title.erase();
+        } else {
+            title += buf[i];
+        }
     }
     return true;
 }
@@ -356,13 +449,10 @@ printf("connected\n");
     if (id == 0) {
         snprintf(buf, sizeof(buf), "GET /addsrv?v=1&br=16&p=8001&m=10&t=NOAA+Weather+Radio:+Austin,+TX+(WXK27+162.400+MHz)&g=Weather&url=http%3A%2F%2Fweather.hewgill.net&irc=&aim=&icq= HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n");
     } else {
-        time_t now = time(0);
-        struct tm *tt = gmtime(&now);
-        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=8001&li=%d&alt=0&ct=Weather+Radio+%02d:%02d+UTC HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
+        snprintf(buf, sizeof(buf), "GET /cgi-bin/tchsrv?id=%d&p=8001&li=%d&alt=0&ct=%s HTTP/1.0\r\nHost: yp.shoutcast.com\r\n\r\n",
             id,
             TotalClients,
-            tt->tm_hour,
-            tt->tm_min);
+            HttpEscape(Title).c_str());
     }
     if (write(s, buf, strlen(buf)) < (ssize_t)strlen(buf)) {
         perror("write");
@@ -465,6 +555,7 @@ int main(int argc, char *argv[])
     signal(SIGPIPE, SIG_IGN);
     Log = fopen("streamer.log", "a");
     Clients.push_back(new RawInputStream());
+    Clients.push_back(new TitleMonitor());
     Clients.push_back(new Listener());
     Clients.push_back(new ShoutcastDirectory());
     for (;;) {

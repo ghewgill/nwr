@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,274 +9,10 @@
 #include <string>
 #include <vector>
 
-#include <pcre.h>
-#include <sigc++/signal.h>
+#include "eas_decode.h"
+#include "eas_demod.h"
 
 using namespace std;
-using namespace SigC;
-
-inline double corr9(const float *p, const float *q)
-{
-    double f;
-    asm volatile ("flds (%1);\n\t"
-                  "fmuls (%2);\n\t"
-                  "flds 4(%1);\n\t"
-                  "fmuls 4(%2);\n\t"
-                  "flds 8(%1);\n\t"
-                  "fmuls 8(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 12(%1);\n\t"
-                  "fmuls 12(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 16(%1);\n\t"
-                  "fmuls 16(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 20(%1);\n\t"
-                  "fmuls 20(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 24(%1);\n\t"
-                  "fmuls 24(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 28(%1);\n\t"
-                  "fmuls 28(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "flds 32(%1);\n\t"
-                  "fmuls 32(%2);\n\t"
-                  "fxch %%st(2);\n\t"
-                  "faddp;\n\t"
-                  "faddp;\n\t" :
-                  "=t" (f) :
-                  "r" (p),
-                  "r" (q) : "memory");
-    return f;
-}
-
-inline double corr(const float *p, const float *q, int n)
-{
-    if (n == 9) {
-        return corr9(p, q);
-    }
-    double s = 0;
-    while (n--) {
-        s += (*p++) * (*q++);
-    }
-    return s;
-}
-
-class Decoder {
-public:
-    Decoder();
-    void decode(const float *buf, int n);
-    Signal1<void, const char *> activate;
-    Signal0<void> deactivate;
-private:
-    enum {CORRLEN = 9};
-    enum {BPHASESTEP = (int)(0x10000/(1920e-6*11025))};
-    float ref[2][2][CORRLEN];
-    float overlapbuf[CORRLEN*2];
-    int overlap;
-    int bphase;
-    int lastbit;
-
-    unsigned char byte;
-    unsigned char lastbyte;
-    int bits;
-    int samebytes;
-
-    char header[300];
-    int hindex;
-    int dashstate;
-
-    string lastheader;
-
-    int gotsamples(const float *buf, int n);
-    void gotbit(int b);
-    void gotbyte(unsigned char c);
-    void gotheader(const char *s);
-};
-
-Decoder::Decoder()
-{
-    double f0 = 2*M_PI*(3/1920e-6);
-    double f1 = 2*M_PI*(4/1920e-6);
-    for (int i = 0; i < CORRLEN; i++) {
-        ref[0][0][i] = sin(i/11025.0*f0);
-        ref[0][1][i] = cos(i/11025.0*f0);
-        ref[1][0][i] = sin(i/11025.0*f1);
-        ref[1][1][i] = cos(i/11025.0*f1);
-    }
-    overlap = 0;
-    bphase = 0;
-    lastbit = 0;
-    bits = 0;
-    samebytes = 0;
-    hindex = -5;
-}
-
-void Decoder::decode(const float *buf, int n)
-{
-    if (overlap > 0) {
-        assert(overlap < CORRLEN);
-        if (n >= CORRLEN) {
-            memcpy(&overlapbuf[overlap], buf, (CORRLEN-1)*sizeof(float));
-            int r = gotsamples(overlapbuf, overlap+CORRLEN-1);
-            assert(r == overlap);
-            overlap = 0;
-        } else {
-            memcpy(&overlapbuf[overlap], buf, n*sizeof(float));
-            overlap += n;
-            if (overlap >= CORRLEN) {
-                int r = gotsamples(overlapbuf, overlap);
-                memmove(overlapbuf, &overlapbuf[r], (overlap-r)*sizeof(float));
-                overlap -= r;
-            }
-            return;
-        }
-    }
-    int r = gotsamples(buf, n);
-    buf += r;
-    n -= r;
-    if (n > 0) {
-        memcpy(overlapbuf, buf, n*sizeof(float));
-        overlap = n;
-    }
-}
-
-int Decoder::gotsamples(const float *buf, int n)
-{
-    int r = 0;
-    while (n >= CORRLEN) {
-        double c00 = corr(buf, ref[0][0], CORRLEN);
-        double c01 = corr(buf, ref[0][1], CORRLEN);
-        double c10 = corr(buf, ref[1][0], CORRLEN);
-        double c11 = corr(buf, ref[1][1], CORRLEN);
-        double d = (c10*c10 + c11*c11) - (c00*c00 + c01*c01);
-        int bit = d > 0;
-        //printf("%d", bit);
-        if (bit != lastbit) {
-            if (bphase < 0x8000) {
-                bphase += BPHASESTEP/8;
-            } else {
-                bphase -= BPHASESTEP/8;
-            }
-        }
-        lastbit = bit;
-        bphase += BPHASESTEP;
-        if (bphase >= 0x10000) {
-            bphase &= 0xffff;
-            gotbit(bit);
-        }
-        buf++;
-        n--;
-        r++;
-    }
-    return r;
-}
-
-void Decoder::gotbit(int b)
-{
-    //printf(" %d ", b);
-    byte >>= 1;
-    if (b) {
-        byte |= 0x80;
-    }
-    bits++;
-    if (bits >= 8) {
-        //printf("[%02x]", byte);
-        bits = 0;
-        if (byte & 0x80) {
-            if (byte == 0xab) {
-                //printf("(sync)");
-                gotbyte(byte);
-                return;
-            } else if (byte == 0xae) {
-                byte >>= 2;
-                bits = 6;
-            } else if (byte == 0xba) {
-                byte >>= 4;
-                bits = 4;
-            } else if (byte == 0xea) {
-                byte >>= 6;
-                bits = 2;
-            } else if (byte == 0xd5) {
-                byte >>= 7;
-                bits = 1;
-            }
-            gotbyte(0);
-        } else if (byte == 0x57 && samebytes >= 4) {
-            byte >>= 1;
-            bits = 7;
-        } else if (byte == 0x5d && samebytes >= 4) {
-            byte >>= 3;
-            bits = 5;
-        } else if (byte == 0x75 && samebytes >= 4) {
-            byte >>= 5;
-            bits = 3;
-        } else {
-            if (byte == lastbyte) {
-                samebytes++;
-            } else {
-                samebytes = 0;
-            }
-            gotbyte(byte);
-            lastbyte = byte;
-        }
-    }
-}
-
-void Decoder::gotbyte(unsigned char c)
-{
-    //printf("%c", c);
-    //printf("%d.%d ", hindex, dashstate);
-    if (c == 0) {
-        if (hindex > 0) {
-            header[hindex] = 0;
-            gotheader(header);
-        }
-        hindex = -5;
-    } else if (c == 0xab) {
-        if (hindex < 0) {
-            hindex++;
-        }
-        dashstate = 0;
-    } else if (hindex >= 0) {
-        if (hindex+1 >= (int)sizeof(header)) {
-            hindex = -5;
-        } else {
-            header[hindex++] = c;
-            if (c == '+') {
-                dashstate = 1;
-            } else if (c == '-' && dashstate > 0) {
-                dashstate++;
-                if (dashstate >= 4) {
-                    header[hindex] = 0;
-                    gotheader(header);
-                    hindex = -5;
-                }
-            }
-        }
-    }
-}
-
-void Decoder::gotheader(const char *s)
-{
-    //printf("gotheader: %s\n", s);
-    if (s == lastheader) {
-        return;
-    }
-    if (strncmp(s, "ZCZC-", 5) == 0) {
-        activate(s);
-    } else if (strncmp(s, "NN", 2) == 0) {
-        deactivate();
-    }
-    lastheader = s;
-}
 
 class AudioWriter {
 public:
@@ -570,59 +305,21 @@ void eas_activate(const char *s)
         printf("got activate while still active\n");
         return;
     }
-    const char *errptr;
-    int erroffset;
-    pcre *re = pcre_compile(
-        "^ZCZC-(\\w+)-(\\w+)(-[^+-]+){1,31}\\+(\\d{2})(\\d{2})-(\\d{3})(\\d{2})(\\d{2})-([^-]+)-",
-        //     1      2     3                 4       5        6       7       8        9
-        0,
-        &errptr,
-        &erroffset,
-        NULL);
-    if (re == NULL) {
-        printf("error compiling re: %s\n", errptr);
+    eas::Message message;
+    if (!eas::Decode(s, message)) {
+        printf("bad eas header: %s\n", s);
         return;
     }
-    int ovector[3*10];
-    int r = pcre_exec(
-        re,
-        NULL,
-        s,
-        strlen(s),
-        0,
-        0,
-        ovector,
-        sizeof(ovector)/sizeof(ovector[0]));
-    pcre_free(re);
-    if (r < 0) {
-        printf("bad eas header: (%d) %s\n", r, s);
-        return;
-    }
-    const char **matches;
-    pcre_get_substring_list(s, ovector, r, &matches);
-    int yday = atoi(matches[6]);
-    time_t now = time(0);
-    struct tm *tt;
-    for (;;) {
-        tt = gmtime(&now);
-        if (1+tt->tm_yday == yday) {
-            break;
-        } else if (1+tt->tm_yday < yday) {
-            now += 86400;
-        } else if (1+tt->tm_yday > yday) {
-            now -= 86400;
-        }
-    }
+    struct tm *tt = gmtime(&message.issued);
     char fn[40];
     snprintf(fn, sizeof(fn), "%04d%02d%02d%s%s-%s-%s",
         1900+tt->tm_year,
         1+tt->tm_mon,
         tt->tm_mday,
-        matches[7],
-        matches[8],
-        matches[1],
-        matches[2]);
-    pcre_free_substring_list(matches);
+        tt->tm_hour,
+        tt->tm_sec,
+        message.originator.c_str(),
+        message.event.c_str());
     AudioSplitter *split = new AudioSplitter(11025, 16, 1);
     split->plug(new WavWriter((string(fn)+".wav").c_str(), 11025, 16, 1));
     mp3name = string(fn)+".mp3";
@@ -657,9 +354,9 @@ int main(int argc, char *argv[])
             exit(1);
         }
     }
-    Decoder decoder;
-    decoder.activate.connect(slot(eas_activate));
-    decoder.deactivate.connect(slot(eas_deactivate));
+    eas::Demodulator demodulator;
+    demodulator.activate.connect(SigC::slot(eas_activate));
+    demodulator.deactivate.connect(SigC::slot(eas_deactivate));
     for (;;) {
         char buf[4096];
         int n = fread(buf, 1, sizeof(buf), f);
@@ -670,7 +367,7 @@ int main(int argc, char *argv[])
         for (int i = 0; i < n/2; i++) {
             fbuf[i] = *(short *)&buf[i*2] * (1.0/32768.0);
         }
-        decoder.decode(fbuf, n/2);
+        demodulator.demod(fbuf, n/2);
         if (rec != NULL) {
             rec->write(buf, n);
         }
