@@ -1,3 +1,9 @@
 #!/bin/sh
 
-./rec -s - | ./demux "./splitter ./streamer './decode -' './log /public/greg/nwr/wxk27'" "cat >/dev/null"
+./rec -s - | \
+./demux \
+    "./splitter \
+        './streamer -c wxk27.conf' \
+        './decode -l wxk27.eas.log -' \
+        './log /public/greg/nwr/wxk27'" \
+    "cat >/dev/null"
