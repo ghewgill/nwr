@@ -1,0 +1,26 @@
+.TH rec 1 "March 2003"
+.SH NAME
+rec \- record from audio device
+.SH SYNOPSIS
+.B rec
+.I file
+.SH DESCRIPTION
+.B rec
+opens an audio device and writes sample data to
+.IR file .
+If
+.I file
+is \-, then write to stdout.
+.SH FILES
+.I /dev/dsp
+.RS
+The audio device from which input data is read.
+.SH BUGS
+There is no way to choose which audio device to use,
+or to change the sampling parameters.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR play (1)

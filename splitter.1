@@ -1,0 +1,22 @@
+.TH splitter 1 "March 2003"
+.SH NAME
+splitter \- split a single input stream into multiple output streams
+.SH SYNOPSIS
+.B splitter
+.I command ...
+.SH DESCRIPTION
+.B splitter
+reads a stream from its stdin,
+and writes the same stream to the stdin of one or more
+.IR command s.
+.SH OPTIONS
+.IP command
+A shell command to run that will receive its stdin from
+.IR splitter 's
+stdin.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR tee (1)

@@ -1,0 +1,27 @@
+.TH squelch 1 "March 2003"
+.SH NAME
+squelch \- apply squelch to an audio signal
+.SH SYNOPSIS
+.B squelch
+.I level
+.SH DESCRIPTION
+.B squelch
+reads audio data from stdin,
+applies a squelching algorithm,
+and writes the squelched audio to stdout.
+
+Squelching a signal means that the output
+signal is suppressed if its energy level falls
+below a certain threshold
+.IR level .
+A properly adjusted squelch setting suppresses
+background noise but not any of the interesting signal.
+.SH OPTIONS
+.IP level
+The audio level below which the signal will be suppressed.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR rec (1)

@@ -1,0 +1,36 @@
+.TH decode 1 "March 2003"
+.SH NAME
+decode \- decode SAME signal from audio
+.SH SYNOPSIS
+.B decode
+.I file
+.SH DESCRIPTION
+.B decode
+reads audio data from
+.I file
+(or stdin if
+.I file
+is \-),
+decodes any SAME (Specific Area Message Encoding) digital data,
+and writes the resulting audio clips to disk and email.
+
+The audio clips are written to disk in WAV and MP3 format.
+The
+.IR lame (1)
+audio compressor is used to create the MP3 files.
+.SH OPTIONS
+.IP file
+The file that contains audio data. If \- is specified,
+read from stdin.
+.SH FILES
+.I notify
+.RS
+A text file that contains a list of email addresses
+that the audio clips will be mailed to.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR lame (1),
+.BR streamer (1)

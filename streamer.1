@@ -1,0 +1,38 @@
+.TH streamer 1 "March 2003" hewgill.com "NOAA Weather Radio"
+.SH NAME
+streamer \- serve streaming audio
+.SH SYNOPSIS
+.B streamer
+.SH DESCRIPTION
+.B streamer
+reads audio data from stdin,
+and streams it in MP3 format to clients that connect via HTTP.
+The
+.IR lame (1)
+audio compressor is used to create the MP3 stream.
+
+A station description entry is also maintained on shoutcast.com.
+.SH BUGS
+The following aspects are not configurable:
+options to
+.IR lame (1)
+including the bit rate and quality;
+the port which listens for HTTP connections;
+the maximum number of clients;
+the address of the shoutcast directory server(s);
+the station name shown on shoutcast;
+other shoutcast info such as urls.
+
+No attempt is made to adjust the streaming rate to match the MP3 bit rate.
+Input data should be supplied in real time.
+.SH FILES
+.I streamer.log
+.RS
+Client connections are logged to this file.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR decode (1),
+.BR lame (1)
