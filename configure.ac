@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT(nws, 1.0)
+AC_INIT(nwr, 1.0)
 AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([play.cpp])
 AM_CONFIG_HEADER([config.h])
