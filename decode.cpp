@@ -251,7 +251,11 @@ void email(const eas::Message &message, const char fn[])
         if (child == 0) {
             dup2(pipeout[0], 0);
             close(pipeout[1]);
-            execl("/usr/sbin/sendmail", "sendmail", "-t", "-i", NULL);
+            if ((*a)[0] == '|') {
+                execl("/bin/sh", "sh", "-c", a->c_str()+1, NULL);
+            } else {
+                execl("/usr/sbin/sendmail", "sendmail", "-t", "-i", a->c_str(), NULL);
+            }
             printf("EmwinProductEmailer: execl() failed: (%d) %s\n", errno, strerror(errno));
             exit(127);
         }
@@ -260,8 +264,8 @@ void email(const eas::Message &message, const char fn[])
         if (f != NULL) {
             char boundary[80];
             snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
-            fprintf(f, "To: %s\n", a->c_str());
-            fprintf(f, "From: nwr@hewgill.net\n");
+            fprintf(f, "To: nwr-wxk27@hewgill.net\n");
+            fprintf(f, "From: nwr-wxk27@hewgill.net\n");
             fprintf(f, "Subject: %s\n", fn);
             fprintf(f, "MIME-Version: 1.0\n");
             fprintf(f, "Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary);
