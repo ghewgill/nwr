@@ -1,42 +1,45 @@
-.TH decode 1 "March 2003"
+.TH capture 1 "March 2003"
 .SH NAME
-decode \- decode SAME signal from audio
+capture \- capture EAS alerts from audio
 .SH SYNOPSIS
-.B decode [-l
+.B capture [-d
+.I dir
+.B ] [-l
 .I log-file
-.B ] [-n
-.I notify-file
+.B ] [-s
+.I script
 .B ]
 .I file
 .SH DESCRIPTION
-.B decode
+.B capture
 reads audio data from
 .I file
 (or stdin if
 .I file
 is \-),
 decodes any SAME (Specific Area Message Encoding) digital data,
-and writes the resulting audio clips to disk and email.
+and writes the resulting alert audio clips to disk.
 
-The audio clips are written to disk in WAV and MP3 format.
+The audio clips are written to disk in MP3 format.
 The
 .IR lame (1)
 audio compressor is used to create the MP3 files.
+
+After creating the audio clip, capture sets the
+environment variables EAS_MESSAGE and EAS_MP3 and
+runs the
+.I script
+specified in the command line.
 .SH OPTIONS
+.IP "-d dir"
+The directory where MP3 files will be created.
 .IP "-l log-file"
 The log file to which EAS events will be written.
-.IP "-n notify-file"
-The list of email addresses,
-or shell commands preceded by |,
-to which email messages will be sent.
+.IP "-s script"
+The command to run after capturing an MP3 file.
 .IP file
 The file that contains audio data. If \- is specified,
 read from stdin.
-.SH FILES
-.I notify
-.RS
-A text file that contains a list of email addresses
-that the audio clips will be mailed to.
 .SH AUTHOR
 Greg Hewgill <greg@hewgill.com>
 .br

@@ -14,8 +14,9 @@
 
 using namespace std;
 
+const char *Dir = ".";
 const char *LogFile = "eas.log";
-const char *Notify = "notify";
+const char *Script = NULL;
 
 class AudioWriter {
 public:
@@ -181,35 +182,6 @@ void AudioSplitter::plug(AudioWriter *out)
     writers.push_back(out);
 }
 
-void base64(char *dest, const char *src, size_t n)
-{
-    static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    char *d = dest;
-    while (n >= 3) {
-        *d++ = table[(*src & 0xFF) >> 2];
-        *d++ = table[((*src & 0xFF) << 4) & 0x3F | ((src[1] & 0xFF) >> 4)];
-        src++;
-        *d++ = table[((*src & 0xFF) << 2) & 0x3F | ((src[1] & 0xFF) >> 6)];
-        src++;
-        *d++ = table[(*src & 0xFF) & 0x3F];
-        src++;
-        n -= 3;
-    }
-    if (n == 1) {
-        *d++ = table[(*src & 0xFF) >> 2];
-        *d++ = table[((*src & 0xFF) << 4) & 0x3F];
-    } else if (n == 2) {
-        *d++ = table[(*src & 0xFF) >> 2];
-        *d++ = table[((*src & 0xFF) << 4) & 0x3F | ((src[1] & 0xFF) >> 4)];
-        src++;
-        *d++ = table[((*src & 0xFF) << 2) & 0x3F];
-    }
-    while ((d-dest) % 4) {
-        *d++ = '=';
-    }
-    *d = 0;
-}
-
 string timestr(time_t t)
 {
     if (t == 0) {
@@ -219,107 +191,6 @@ string timestr(time_t t)
     char buf[40];
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d", 1900+tm->tm_year, 1+tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
     return buf;
-}
-
-void email(const eas::Message &message, const char fn[])
-{
-    set<string> Addresses;
-    FILE *f = fopen(Notify, "r");
-    if (f == NULL) {
-        return;
-    }
-    char buf[1024];
-    while (fgets(buf, sizeof(buf), f)) {
-        if (buf[0] && buf[strlen(buf)-1] == '\n') {
-            buf[strlen(buf)-1] = 0;
-        }
-        if (buf[0] == 0 || buf[0] == '#') {
-            continue;
-        }
-        Addresses.insert(buf);
-    }
-    fclose(f);
-    for (set<string>::const_iterator a = Addresses.begin(); a != Addresses.end(); a++) {
-        printf("*** sending %s to %s\n", fn, a->c_str());
-        int pipeout[2];
-        if (pipe(pipeout) != 0) {
-            printf("EmwinProductEmailer: pipe() failed: (%d) %s\n", errno, strerror(errno));
-            return;
-        }
-        pid_t child = fork();
-        if (child == -1) {
-            printf("EmwinProductEmailer: fork() failed: (%d) %s\n", errno, strerror(errno));
-            return;
-        }
-        if (child == 0) {
-            dup2(pipeout[0], 0);
-            close(pipeout[1]);
-            if ((*a)[0] == '|') {
-                execl("/bin/sh", "sh", "-c", a->c_str()+1, NULL);
-            } else {
-                execl("/usr/sbin/sendmail", "sendmail", "-t", "-i", a->c_str(), NULL);
-            }
-            printf("EmwinProductEmailer: execl() failed: (%d) %s\n", errno, strerror(errno));
-            exit(127);
-        }
-        close(pipeout[0]);
-        FILE *f = fdopen(pipeout[1], "w");
-        if (f != NULL) {
-            char boundary[80];
-            snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
-            fprintf(f, "To: nwr@hewgill.net\n");
-            fprintf(f, "From: nwr@hewgill.net\n");
-            fprintf(f, "Subject: [NWR] %s\n", fn);
-            fprintf(f, "MIME-Version: 1.0\n");
-            fprintf(f, "Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary);
-            fprintf(f, "\n");
-            fprintf(f, "This is a multi-part message in MIME format.\n");
-            fprintf(f, "\n");
-            fprintf(f, "--%s\n", boundary);
-            fprintf(f, "Content-Type: text/plain\n");
-            fprintf(f, "\n");
-            fprintf(f, "Originator: (%s) %s\n", message.originator.c_str(), message.originator_desc.c_str());
-            fprintf(f, "Event: (%s) %s\n", message.event.c_str(), message.event_desc.c_str());
-            fprintf(f, "Location:\n");
-            for (vector<eas::Message::Area>::const_iterator a = message.areas.begin(); a != message.areas.end(); a++) {
-                fprintf(f, "  (%s) %s\n", a->code.c_str(), a->desc.c_str());
-            }
-            fprintf(f, "Issued: %s\n", timestr(message.issued).c_str());
-            fprintf(f, "Received: %s\n", timestr(message.received).c_str());
-            fprintf(f, "Purge: %s\n", timestr(message.purge).c_str());
-            fprintf(f, "Sender: (%s) %s\n", message.sender.c_str(), message.sender_desc.c_str());
-            fprintf(f, "\n");
-            fprintf(f, "--%s\n", boundary);
-            fprintf(f, "Content-Type: audio/mp3\n");
-            fprintf(f, "Content-Transfer-Encoding: base64\n");
-            fprintf(f, "Content-Disposition: attachment; filename=\"%s\"\n", fn);
-            fprintf(f, "\n");
-            FILE *att = fopen(fn, "rb");
-            if (att != NULL) {
-                for (;;) {
-                    char buf[57];
-                    size_t n = fread(buf, 1, sizeof(buf), att);
-                    if (n == 0) {
-                        break;
-                    }
-                    char enc[80];
-                    base64(enc, buf, n);
-                    fprintf(f, "%s\n", enc);
-                }
-                fclose(att);
-            }
-            fprintf(f, "\n");
-            fprintf(f, "--%s--\n", boundary);
-            fclose(f);
-        } else {
-            printf("EmwinProductEmailer: fdopen() failed: (%d) %s\n", errno, strerror(errno));
-        }
-        int status;
-        waitpid(child, &status, 0);
-        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-            printf("EmwinProductEmailer: sendmail exec error %08x\n", status);
-        }
-    }
 }
 
 AudioWriter *rec;
@@ -359,7 +230,7 @@ void eas_activate(const char *s)
     AudioSplitter *split = new AudioSplitter(11025, 16, 1);
     split->plug(new WavWriter((string(fn)+".wav").c_str(), 11025, 16, 1));
     mp3name = string(fn)+".mp3";
-    split->plug(new Mp3Writer(mp3name.c_str(), 11025, 16, 1));
+    split->plug(new Mp3Writer(string(Dir)+"/"+mp3name.c_str(), 11025, 16, 1));
     rec = split;
 }
 
@@ -372,9 +243,16 @@ void eas_deactivate()
     delete rec;
     rec = NULL;
     printf("capture done: %s\n", mp3name.c_str());
-    if (fork() == 0) {
-        email(Message, mp3name.c_str());
-        exit(0);
+    if (Script != NULL) {
+        if (fork() == 0) {
+            setenv("EAS_MESSAGE", Message.raw.c_str(), 1);
+            setenv("EAS_MP3", mp3name.c_str(), 1);
+            int r = system(Script);
+            if (r != 0) {
+                printf("capture: exit code %d from script\n", r);
+            }
+            exit(0);
+        }
     }
 }
 
@@ -383,6 +261,14 @@ int main(int argc, char *argv[])
     int a = 1;
     while (a < argc && argv[a][0] == '-' && argv[a][1] != 0) {
         switch (argv[a][1]) {
+        case 'd':
+            if (argv[a][2]) {
+                Dir = argv[a]+2;
+            } else {
+                a++;
+                Dir = argv[a];
+            }
+            break;
         case 'l':
             if (argv[a][2]) {
                 LogFile = argv[a]+2;
@@ -391,12 +277,12 @@ int main(int argc, char *argv[])
                 LogFile = argv[a];
             }
             break;
-        case 'n':
+        case 's':
             if (argv[a][2]) {
-                Notify = argv[a]+2;
+                Script = argv[a]+2;
             } else {
                 a++;
-                Notify = argv[a];
+                Script = argv[a];
             }
             break;
         default:
@@ -422,7 +308,7 @@ int main(int argc, char *argv[])
         char buf[4096];
         int n = fread(buf, 1, sizeof(buf), f);
         if (n == 0) {
-            fprintf(stderr, "decode: eof on input\n");
+            fprintf(stderr, "capture: eof on input\n");
             break;
         }
         float fbuf[sizeof(buf)/2];
