@@ -1,4 +1,4 @@
-CXXFLAGS = -g -Wall
+CXXFLAGS = -g -Wall -Werror
 INCLUDES = @SIGC_CFLAGS@
 LDADD = @SIGC_LIBS@
 
