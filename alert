@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ x$EAS_MESSAGE != x ]; then
-    #./emailer -f nwr-$1@hewgill.net -n $1.notify $EAS_MESSAGE $EAS_MP3
+    ./emailer -f nwr-$1@hewgill.net -n $1.notify $EAS_MESSAGE $EAS_MP3
     ./insertdb -s $1 $EAS_MESSAGE $EAS_MP3
 fi
 perl extract.pl $1 | xt /dev/stdin eas.xsl | perl xhtmlfix.pl >/public/file/0/nwr/$1.html
