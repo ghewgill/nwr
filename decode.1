@@ -2,7 +2,9 @@
 .SH NAME
 decode \- decode SAME signal from audio
 .SH SYNOPSIS
-.B decode
+.B decode [-l
+.I log-file
+.B ]
 .I file
 .SH DESCRIPTION
 .B decode
@@ -19,6 +21,8 @@ The
 .IR lame (1)
 audio compressor is used to create the MP3 files.
 .SH OPTIONS
+.IP "-l log-file"
+The log file to which EAS events will be written.
 .IP file
 The file that contains audio data. If \- is specified,
 read from stdin.

@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const char *LogFile = "eas.log";
+
 class AudioWriter {
 public:
     AudioWriter(int freq, int bits, int channels): Freq(freq), Bits(bits), Channels(channels) {}
@@ -336,7 +338,7 @@ void eas_activate(const char *s)
         return;
     }
     Message = message;
-    FILE *f = fopen("eas.log", "a");
+    FILE *f = fopen(LogFile, "a");
     if (f != NULL) {
         fprintf(f, "%s %s\n", timestr(time(0)).c_str(), s);
         fclose(f);
@@ -377,11 +379,28 @@ void eas_deactivate()
 
 int main(int argc, char *argv[])
 {
+    int a = 1;
+    while (a < argc && argv[a][0] == '-' && argv[a][1] != 0) {
+        switch (argv[a][1]) {
+        case 'l':
+            if (argv[a][2]) {
+                LogFile = argv[a]+2;
+            } else {
+                a++;
+                LogFile = argv[a];
+            }
+            break;
+        default:
+            fprintf(stderr, "%s: unknown option %c\n", argv[0], argv[a][1]);
+            exit(1);
+        }
+        a++;
+    }
     FILE *f;
-    if (strcmp(argv[1], "-") == 0) {
+    if (strcmp(argv[a], "-") == 0) {
         f = stdin;
     } else {
-        f = fopen(argv[1], "rb");
+        f = fopen(argv[a], "rb");
         if (f == NULL) {
             perror("fopen");
             exit(1);
