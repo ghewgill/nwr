@@ -229,8 +229,8 @@ void eas_activate(const char *s)
         message.event.c_str());
     AudioSplitter *split = new AudioSplitter(11025, 16, 1);
     split->plug(new WavWriter((string(fn)+".wav").c_str(), 11025, 16, 1));
-    mp3name = string(fn)+".mp3";
-    split->plug(new Mp3Writer((string(Dir)+"/"+mp3name).c_str(), 11025, 16, 1));
+    mp3name = string(Dir)+"/"+string(fn)+".mp3";
+    split->plug(new Mp3Writer(mp3name.c_str(), 11025, 16, 1));
     rec = split;
 }
 

@@ -99,7 +99,12 @@ void email(const eas::Message &message, const char fn[])
             snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
             fprintf(f, "To: %s\n", From);
             fprintf(f, "From: %s\n", From);
-            fprintf(f, "Subject: [NWR] %s\n", fn);
+            string name = fn;
+            string::size_type i = name.rfind('/');
+            if (i != string::npos) {
+                name = name.substr(i+1);
+            }
+            fprintf(f, "Subject: [NWR] %s\n", name.c_str());
             fprintf(f, "MIME-Version: 1.0\n");
             fprintf(f, "Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary);
             fprintf(f, "\n");
@@ -122,7 +127,7 @@ void email(const eas::Message &message, const char fn[])
             fprintf(f, "--%s\n", boundary);
             fprintf(f, "Content-Type: audio/mp3\n");
             fprintf(f, "Content-Transfer-Encoding: base64\n");
-            fprintf(f, "Content-Disposition: attachment; filename=\"%s\"\n", fn);
+            fprintf(f, "Content-Disposition: attachment; filename=\"%s\"\n", name.c_str());
             fprintf(f, "\n");
             FILE *att = fopen(fn, "rb");
             if (att != NULL) {

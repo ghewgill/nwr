@@ -102,6 +102,11 @@ int main(int argc, char *argv[])
         fprintf(stderr, "insertdb: bad code\n");
         exit(1);
     }
+    string fn = argv[a+1];
+    string::size_type i = fn.rfind('/');
+    if (i != string::npos) {
+        fn = fn.substr(i+1);
+    }
     conn = PQconnectdb("dbname=nwr");
     if (PQstatus(conn) != CONNECTION_OK) {
         fprintf(stderr, "insertdb: connection failed (%d)\n", PQstatus(conn));
@@ -120,7 +125,7 @@ int main(int argc, char *argv[])
         timestr(message.received).c_str(),
         timestr(message.purge).c_str(),
         message.sender.c_str(),
-        argv[a+1]);
+        fn.c_str());
     PQclear(r);
     for (vector<eas::Message::Area>::iterator a = message.areas.begin(); a != message.areas.end(); a++) {
         r = query("insert into message_area (message_id, code, part, state, county) values (%d, '%s', %d, %d, %d)",
