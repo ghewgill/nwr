@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         if (child == 0) {
             dup2(pin[0], 0);
             close(pin[1]);
-            execl("/bin/sh", "sh", "-c", argv[a]);
+            execl("/bin/sh", "sh", "-c", argv[a], NULL);
             perror("execl");
             exit(127);
         }
