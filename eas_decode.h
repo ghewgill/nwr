@@ -17,6 +17,7 @@ struct Message {
     };
     std::vector<Area> areas;
     time_t issued;
+    time_t received;
     time_t purge;
     std::string sender;
     std::string sender_desc;

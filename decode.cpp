@@ -278,6 +278,7 @@ void email(const eas::Message &message, const char fn[])
                 fprintf(f, "  (%s) %s\n", a->code.c_str(), a->desc.c_str());
             }
             fprintf(f, "Issued: %s\n", timestr(message.issued).c_str());
+            fprintf(f, "Received: %s\n", timestr(message.received).c_str());
             fprintf(f, "Purge: %s\n", timestr(message.purge).c_str());
             fprintf(f, "Sender: (%s) %s\n", message.sender.c_str(), message.sender_desc.c_str());
             fprintf(f, "\n");
@@ -333,7 +334,7 @@ void eas_activate(const char *s)
     Message = message;
     FILE *f = fopen("eas.log", "a");
     if (f != NULL) {
-        fprintf(f, "%s\n", s);
+        fprintf(f, "%s %s\n", timestr(time(0)).c_str(), s);
         fclose(f);
     } else {
         perror("fopen");

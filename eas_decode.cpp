@@ -154,6 +154,9 @@ bool eas::Decode(const char *s, Message &message)
             now -= 86400;
         }
     }
+    tt->tm_hour = atoi(matches[7]);
+    tt->tm_min = atoi(matches[8]);
+    tt->tm_sec = 0;
     message.originator = matches[1];
     message.originator_desc = getOriginatorDesc(message.originator);
     message.event = matches[2];
@@ -184,6 +187,7 @@ bool eas::Decode(const char *s, Message &message)
         a += *p;
     }
     message.issued = mkgmtime(tt);
+    message.received = time(0);
     message.purge = message.issued + 60*(60*atoi(matches[4]) + atoi(matches[5]));
     message.sender = matches[9];
     message.sender_desc = getSenderDesc(message.sender);
