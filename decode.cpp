@@ -511,8 +511,21 @@ void base64(char *dest, const char *src, size_t n)
 void email(const char fn[])
 {
     set<string> Addresses;
-    Addresses.insert("gregh@ud.com");
-    Addresses.insert("moose@ud.com");
+    FILE *f = fopen("notify", "r");
+    if (f == NULL) {
+        return;
+    }
+    char buf[1024];
+    while (fgets(buf, sizeof(buf), f)) {
+        if (buf[0] && buf[strlen(buf)-1] == '\n') {
+            buf[strlen(buf)-1] = 0;
+        }
+        if (buf[0] == 0 || buf[0] == '#') {
+            continue;
+        }
+        Addresses.insert(buf);
+    }
+    fclose(f);
     for (set<string>::const_iterator a = Addresses.begin(); a != Addresses.end(); a++) {
         printf("*** sending %s to %s\n", fn, a->c_str());
         int pipeout[2];
