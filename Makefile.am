@@ -2,12 +2,12 @@ CXXFLAGS = -g -Wall -Werror
 INCLUDES = @SIGC_CFLAGS@
 LDADD = @SIGC_LIBS@
 
-bin_PROGRAMS = rec play squelch encode decode plot log streamer splitter monitor
+bin_PROGRAMS = rec play squelch encode decode plot log streamer splitter monitor demux
 
 htmldir = $(prefix)/html
 html_DATA = rec.html squelch.html decode.html log.html streamer.html splitter.html
 
-man_MANS = rec.1 squelch.1 decode.1 log.1 streamer.1 splitter.1
+man_MANS = rec.1 squelch.1 decode.1 log.1 streamer.1 splitter.1 demux.1
 
 EXTRA_DIST = $(man_MANS)
 
@@ -30,6 +30,8 @@ streamer_SOURCES = streamer.cpp
 splitter_SOURCES = splitter.cpp
 
 monitor_SOURCES = monitor.cpp eas_demod.cpp eas_decode.cpp
+
+demux_SOURCES = demux.cpp
 
 eas_decode.cpp: fips.inc
 

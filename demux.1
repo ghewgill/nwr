@@ -1,0 +1,24 @@
+.TH demux 1 "March 2003"
+.SH NAME
+demux \- split a stereo input stream into two mono output streams
+.SH SYNOPSIS
+.B demux
+.I leftcommand rightcommand
+.SH DESCRIPTION
+.B demux
+reads a stereo stream from its stdin,
+and writes the left channel to the stdin of
+.IR leftcommand ,
+and the right channel to the stdin of
+.IR rightcommand .
+.SH OPTIONS
+.IP leftcommand
+A shell command to run that will receive its stdin from the left channel.
+.IP rightcommand
+A shell command to run that will receive its stdin from the right channel.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR splitter (1)
