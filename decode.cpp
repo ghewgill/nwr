@@ -331,6 +331,13 @@ void eas_activate(const char *s)
         return;
     }
     Message = message;
+    FILE *f = fopen("eas.log", "a");
+    if (f != NULL) {
+        fprintf(f, "%s\n", s);
+        fclose(f);
+    } else {
+        perror("fopen");
+    }
     struct tm *tt = gmtime(&message.issued);
     char fn[40];
     snprintf(fn, sizeof(fn), "%04d%02d%02d%02d%02d-%s-%s",
