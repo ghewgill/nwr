@@ -1,5 +1,6 @@
 #!/bin/sh
 
+find /public/greg/nwr -name 'NWR-*.raw' | xargs rm &
 ./rec -s - | \
 ./demux \
     "./splitter \
