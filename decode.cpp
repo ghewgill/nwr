@@ -207,7 +207,18 @@ void base64(char *dest, const char *src, size_t n)
     *d = 0;
 }
 
-void email(const char fn[])
+string timestr(time_t t)
+{
+    if (t == 0) {
+        return "none";
+    }
+    struct tm *tm = gmtime(&t);
+    char buf[40];
+    snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d", 1900+tm->tm_year, 1+tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+    return buf;
+}
+
+void email(const eas::Message &message, const char fn[])
 {
     set<string> Addresses;
     FILE *f = fopen("notify", "r");
@@ -260,7 +271,15 @@ void email(const char fn[])
             fprintf(f, "--%s\n", boundary);
             fprintf(f, "Content-Type: text/plain\n");
             fprintf(f, "\n");
-            fprintf(f, "%s\n", fn);
+            fprintf(f, "Originator: (%s) %s\n", message.originator.c_str(), message.originator_desc.c_str());
+            fprintf(f, "Event: (%s) %s\n", message.event.c_str(), message.event_desc.c_str());
+            fprintf(f, "Location:\n");
+            for (vector<eas::Message::Area>::const_iterator a = message.areas.begin(); a != message.areas.end(); a++) {
+                fprintf(f, "  (%s) %s\n", a->code.c_str(), a->desc.c_str());
+            }
+            fprintf(f, "Issued: %s\n", timestr(message.issued).c_str());
+            fprintf(f, "Purge: %s\n", timestr(message.purge).c_str());
+            fprintf(f, "Sender: (%s) %s\n", message.sender.c_str(), message.sender_desc.c_str());
             fprintf(f, "\n");
             fprintf(f, "--%s\n", boundary);
             fprintf(f, "Content-Type: audio/mp3\n");
@@ -297,6 +316,7 @@ void email(const char fn[])
 
 AudioWriter *rec;
 string mp3name;
+eas::Message Message;
 
 void eas_activate(const char *s)
 {
@@ -310,6 +330,7 @@ void eas_activate(const char *s)
         printf("bad eas header: %s\n", s);
         return;
     }
+    Message = message;
     struct tm *tt = gmtime(&message.issued);
     char fn[40];
     snprintf(fn, sizeof(fn), "%04d%02d%02d%s%s-%s-%s",
@@ -337,7 +358,7 @@ void eas_deactivate()
     rec = NULL;
     printf("capture done: %s\n", mp3name.c_str());
     if (fork() == 0) {
-        email(mp3name.c_str());
+        email(Message, mp3name.c_str());
         exit(0);
     }
 }
