@@ -27,4 +27,7 @@ insertdb
 *.html
 fips.inc
 
+*.log
+*.notify
+
 nwr-*.tar.gz
