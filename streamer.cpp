@@ -25,6 +25,7 @@ struct {
     string Server;
     int Port;
     string Log;
+    string Encoder;
     int MaxClients;
     string Name;
     string Genre;
@@ -36,6 +37,7 @@ struct {
     "localhost",
     8001,
     "streamer.log",
+    "lame -r -m m -s 11.025 -x -b 16 -q 9 - -",
     10
 };
 
@@ -66,7 +68,7 @@ void filter(pid_t &filterpid, int &filterin, int &filterout)
         close(pin[1]);
         dup2(pout[1], 1);
         close(pout[0]);
-        execl("/bin/sh", "sh", "-c", "lame -r -m m -s 11.025 -x -b 16 -q 9 - -", NULL);
+        execl("/bin/sh", "sh", "-c", Config.Encoder.c_str(), NULL);
         perror("execl");
         exit(127);
     }
@@ -120,6 +122,8 @@ void LoadConfig(const char *fn)
             Config.Port = atoi(value);
         } else if (strcasecmp(name, "Log") == 0) {
             Config.Log = value;
+        } else if (strcasecmp(name, "Encoder") == 0) {
+            Config.Encoder = value;
         } else if (strcasecmp(name, "MaxClients") == 0) {
             Config.MaxClients = atoi(value);
         } else if (strcasecmp(name, "Name") == 0) {
