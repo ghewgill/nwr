@@ -22,6 +22,7 @@ using namespace std;
 const int BUFSIZE = 65536;
 
 struct {
+    string ConfigFileName;
     string Server;
     int Port;
     string Log;
@@ -35,6 +36,7 @@ struct {
     string AIM;
     string ICQ;
 } Config = {
+    "",
     "localhost",
     8001,
     "streamer.log",
@@ -105,6 +107,7 @@ void LoadConfig(const char *fn)
         fprintf(stderr, "streamer: streamer.conf not found: (%d) %s\n", errno, strerror(errno));
         exit(1);
     }
+    Config.ConfigFileName = fn;
     char buf[1024];
     while (fgets(buf, sizeof(buf), f) != NULL) {
         if (buf[0] == '#') {
@@ -407,6 +410,13 @@ printf("Listener::notifyRead\n");
 ShoutcastDirectory::ShoutcastDirectory()
  : s(-1), id(0), nextupdate(0)
 {
+    /* hmm this doesn't work
+    FILE *f = fopen((Config.ConfigFileName+".id").c_str(), "r");
+    if (f != NULL) {
+        fscanf(f, "%d", &id);
+        fclose(f);
+        printf("restored id %d from %s\n", id, (Config.ConfigFileName+".id").c_str());
+    }*/
 }
 
 ShoutcastDirectory::~ShoutcastDirectory()
@@ -488,6 +498,13 @@ printf("ShoutcastDirectory::notifyRead\n");
                     nextupdate = time(0) + 300;
                 } else {
                     printf("stream id %d (refresh %d)\n", id, refresh);
+                    FILE *f = fopen((Config.ConfigFileName+".id").c_str(), "w");
+                    if (f != NULL) {
+                        fprintf(f, "%d\n", id);
+                        fclose(f);
+                    } else {
+                        perror("fopen id");
+                    }
                     nextupdate = time(0);
                 }
             } else {
@@ -686,9 +703,9 @@ int main(int argc, char *argv[])
     LoadConfig(config.c_str());
     Log = fopen(Config.Log.c_str(), "a");
     Clients.push_back(new RawInputStream());
-    Clients.push_back(new TitleMonitor());
     Clients.push_back(new Listener());
     if (!Config.Name.empty()) {
+        Clients.push_back(new TitleMonitor());
         Clients.push_back(new ShoutcastDirectory());
     }
     for (;;) {
