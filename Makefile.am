@@ -5,9 +5,9 @@ LDADD = @SIGC_LIBS@ @PQ_LIBS@
 bin_PROGRAMS = rec play squelch encode capture plot log streamer splitter monitor demux emailer insertdb
 
 htmldir = $(prefix)/html
-html_DATA = rec.html squelch.html capture.html log.html streamer.html splitter.html demux.html emailer.html
+html_DATA = rec.html squelch.html capture.html log.html streamer.html splitter.html demux.html emailer.html insertdb.html
 
-man_MANS = rec.1 squelch.1 capture.1 log.1 streamer.1 splitter.1 demux.1 emailer.1
+man_MANS = rec.1 squelch.1 capture.1 log.1 streamer.1 splitter.1 demux.1 emailer.1 insertdb.1
 
 EXTRA_DIST = $(man_MANS)
 

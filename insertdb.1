@@ -1,0 +1,25 @@
+.TH insertdb 1 "March 2003"
+.SH NAME
+insertdb \- insert EAS alerts into database
+.SH SYNOPSIS
+.B insertdb [-s
+.I station
+.B ]
+.I code filename
+.SH DESCRIPTION
+.B insertdb
+inserts a record into a database containing the information
+from the EAS alert message.
+.SH OPTIONS
+.IP "-s station"
+This is the station from which the message was received.
+.IP code
+The EAS header code for this message.
+.IP filename
+The name of the MP3 file containing the alert message.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR capture (1)
