@@ -42,7 +42,7 @@ void filter(int &filterin, int &filterout)
         close(pin[1]);
         dup2(pout[1], 1);
         close(pout[0]);
-        execl("/bin/sh", "sh", "-c", "lame -r -m m -s 22.05 -x -b 16 - -", NULL);
+        execl("/bin/sh", "sh", "-c", "lame -r -m m -s 22.05 -x -b 16 -q 9 - -", NULL);
         perror("execl");
         exit(127);
     }
@@ -187,9 +187,19 @@ int main(int argc, char *argv[])
                     }
                     Clients[i].index += n;
                     //printf("header: %.*s", Clients[i].index, Clients[i].request);
-                    if (Clients[i].index > 4 && strncmp(Clients[i].request+Clients[i].index-4, "\r\n\r\n", 4) == 0) {
+                    if (Clients[i].index > 4 && strncmp(Clients[i].request+Clients[i].index-4, "\r\n\r\n", 4) == 0 || strncmp(Clients[i].request+Clients[i].index-2, "\n\n", 2) == 0) {
                         char buf[256];
-                        snprintf(buf, sizeof(buf), "HTTP/1.0 200 OK\r\nContent-Type: audio/mpeg\r\n\r\n");
+                        snprintf(buf, sizeof(buf),
+                            "ICY 200 OK\r\n"
+                            "Content-Type: audio/mpeg\r\n"
+                            "icy-notice1: <BR>This stream requires <a href=\"http://www.winamp.com/\">Winamp</a><BR>\r\n"
+                            "icy-notice2: SHOUTcast Distributed Network Audio Server/posix v1.x.x\r\n"
+                            "icy-name: National Weather Radio WXK27 Austin\r\n"
+                            "icy-genre: Weather\r\n"
+                            "icy-url: http://weather.hewgill.net\r\n"
+                            "icy-pub: 1\r\n"
+                            "icy-br: 16\r\n"
+                            "\r\n");
                         n = write(Clients[i].fd, buf, strlen(buf));
                         if (n <= 0) {
                             perror("write");
