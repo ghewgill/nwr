@@ -2,7 +2,9 @@
 .SH NAME
 streamer \- serve streaming audio
 .SH SYNOPSIS
-.B streamer
+.B streamer [-c
+.I config-file
+.B ]
 .SH DESCRIPTION
 .B streamer
 reads audio data from stdin,
@@ -12,6 +14,11 @@ The
 audio compressor is used to create the MP3 stream.
 
 A station description entry is also maintained on shoutcast.com.
+.SH OPTIONS
+.IP "-c config-file"
+Read the configuration from 
+.I config-file
+instead of from "streamer.conf".
 .SH BUGS
 The following aspects are not configurable:
 options to

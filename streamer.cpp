@@ -24,6 +24,7 @@ const int BUFSIZE = 65536;
 struct {
     string Server;
     int Port;
+    string Log;
     int MaxClients;
     string Name;
     string Genre;
@@ -88,9 +89,9 @@ string HttpEscape(const string &s)
     return r;
 }
 
-void LoadConfig()
+void LoadConfig(const char *fn)
 {
-    FILE *f = fopen("streamer.conf", "r");
+    FILE *f = fopen(fn, "r");
     if (f == NULL) {
         fprintf(stderr, "streamer: streamer.conf not found: (%d) %s\n", errno, strerror(errno));
         exit(1);
@@ -112,6 +113,8 @@ void LoadConfig()
             printf("Server: %s\n", value);
         } else if (strcasecmp(name, "Port") == 0) {
             Config.Port = atoi(value);
+        } else if (strcasecmp(name, "Log") == 0) {
+            Config.Log = value;
         } else if (strcasecmp(name, "MaxClients") == 0) {
             Config.MaxClients = atoi(value);
         } else if (strcasecmp(name, "Name") == 0) {
@@ -644,9 +647,27 @@ bool Client::checkOverflow(int n)
 
 int main(int argc, char *argv[])
 {
+    string config = "streamer.conf";
+    int a = 1;
+    while (a < argc && argv[a][0] == '-' && argv[a][1] != 0) {
+        switch (argv[a][1]) {
+        case 'c':
+            if (argv[a][2]) {
+                config = argv[a]+2;
+            } else {
+                a++;
+                config = argv[a];
+            }
+            break;
+        default:
+            fprintf(stderr, "%s: unknown option %c\n", argv[0], argv[a][1]);
+            exit(1);
+        }
+        a++;
+    }
     signal(SIGPIPE, SIG_IGN);
-    LoadConfig();
-    Log = fopen("streamer.log", "a");
+    LoadConfig(config.c_str());
+    Log = fopen(Config.Log.c_str(), "a");
     Clients.push_back(new RawInputStream());
     Clients.push_back(new TitleMonitor());
     Clients.push_back(new Listener());
