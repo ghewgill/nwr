@@ -111,6 +111,18 @@ struct County {
 static const County Counties[] = {
     #include "fips.inc"
 };
+static const char *Parts[] = {
+    "",
+    "Northwest ",
+    "North ",
+    "Northeast ",
+    "West ",
+    "Central ",
+    "East ",
+    "Southwest ",
+    "South ",
+    "Southeast ",
+};
 
 static int fipscompare(const void *p1, const void *p2)
 {
@@ -124,7 +136,7 @@ static string getAreaDesc(const eas::Message::Area &area)
     if (c == NULL) {
         return string();
     }
-    return c->name;
+    return string(Parts[area.part]) + c->name;
 }
 
 static string getSenderDesc(const string &sender)
