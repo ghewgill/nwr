@@ -1,0 +1,76 @@
+<HTML>
+<HEAD>
+<TITLE>streamer.1 manual page</TITLE>
+</HEAD>
+<BODY>
+<H1>streamer.1 manual page</H1>
+<HR>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+       streamer - serve streaming audio
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+       <B>streamer</B> <B>[-c</B> <I>config-file</I> <B>]</B>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       <B>streamer</B>  reads  audio  data from stdin, and streams it in
+       MP3 format to clients that connect via HTTP.  The  <B><A HREF="lame.html">lame(1)</A></B>
+       audio compressor is used to create the MP3 stream.
+
+       A  station  description entry is also maintained on shout-
+       cast.com.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+       -c config-file
+              Read the configuration from <I>config-file</I> instead  of
+              from "streamer.conf".
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+       The  following  aspects  are  not configurable: options to
+       <B><A HREF="lame.html">lame(1)</A></B> including the bit rate and quality; the port which
+       listens  for  HTTP  connections;  the  maximum  number  of
+       clients; the address of the shoutcast directory server(s);
+       the  station name shown on shoutcast; other shoutcast info
+       such as urls.
+
+       No attempt is made to adjust the streaming rate  to  match
+       the  MP3  bit rate.  Input data should be supplied in real
+       time.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+       <I>streamer.log</I>
+              Client connections are logged to this file.
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Greg Hewgill <a href="mailto:greg@hewgill.com">&lt;greg@hewgill.com&gt;</a>
+       <a href="http://hewgill.com">http://hewgill.com</a>
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+       <B><A HREF="capture.html">capture(1)</A></B>, <B><A HREF="lame.html">lame(1)</A></B>
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+<!--#include virtual="/google-analytics.inc"-->
+</BODY>
+</HTML>

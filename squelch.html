@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>squelch.1 manual page</TITLE>
+</HEAD>
+<BODY>
+<H1>squelch.1 manual page</H1>
+<HR>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+       squelch - apply squelch to an audio signal
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+       <B>squelch</B> <I>level</I>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       <B>squelch</B>  reads audio data from stdin, applies a squelching
+       algorithm, and writes the squelched audio to stdout.
+
+       Squelching a signal means that the output signal  is  sup-
+       pressed  if its energy level falls below a certain thresh-
+       old <I>level</I>.  A properly adjusted squelch setting suppresses
+       background noise but not any of the interesting signal.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+       level  The audio level below which the signal will be sup-
+              pressed.
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Greg Hewgill <a href="mailto:greg@hewgill.com">&lt;greg@hewgill.com&gt;</a>
+       <a href="http://hewgill.com">http://hewgill.com</a>
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+       <B><A HREF="rec.html">rec(1)</A></B>
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+<!--#include virtual="/google-analytics.inc"-->
+</BODY>
+</HTML>

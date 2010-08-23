@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+<TITLE>capture.1 manual page</TITLE>
+</HEAD>
+<BODY>
+<H1>capture.1 manual page</H1>
+<HR>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+       capture - capture EAS alerts from audio
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+       <B>capture</B> <B>[-d</B> <I>dir</I> <B>]</B> <B>[-l</B> <I>log-file</I> <B>]</B> <B>[-s</B> <I>script</I> <B>]</B> <I>file</I>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       <B>capture</B>  reads  audio  data from <I>file</I> (or stdin if <I>file</I> is
+       -), decodes any SAME (Specific Area Message Encoding) dig-
+       ital  data,  and writes the resulting alert audio clips to
+       disk.
+
+       The audio clips are written to disk in  MP3  format.   The
+       <B><A HREF="lame.html">lame(1)</A></B>  audio compressor is used to create the MP3 files.
+
+       After creating the audio clip, capture sets  the  environ-
+       ment variables EAS_MESSAGE and EAS_MP3 and runs the <I>script</I>
+       specified in the command line.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+       -d dir The directory where MP3 files will be created.
+
+       -l log-file
+              The log file to which EAS events will be written.
+
+       -s script
+              The command to run after capturing an MP3 file.
+
+       file   The file that contains audio data. If -  is  speci-
+              fied, read from stdin.
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Greg Hewgill <a href="mailto:greg@hewgill.com">&lt;greg@hewgill.com&gt;</a>
+       <a href="http://hewgill.com">http://hewgill.com</a>
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+       <B><A HREF="lame.html">lame(1)</A></B>, <B><A HREF="streamer.html">streamer(1)</A></B>
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+<!--#include virtual="/google-analytics.inc"-->
+</BODY>
+</HTML>

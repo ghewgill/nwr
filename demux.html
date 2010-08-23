@@ -1,0 +1,58 @@
+<HTML>
+<HEAD>
+<TITLE>demux.1 manual page</TITLE>
+</HEAD>
+<BODY>
+<H1>demux.1 manual page</H1>
+<HR>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+       demux  -  split a stereo input stream into two mono output
+       streams
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+       <B>demux</B> <I>leftcommand</I> <I>rightcommand</I>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       <B>demux</B> reads a stereo stream from its stdin, and writes the
+       left  channel  to  the stdin of <I>leftcommand</I>, and the right
+       channel to the stdin of <I>rightcommand</I>.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+       leftcommand
+              A shell command to run that will receive its  stdin
+              from the left channel.
+
+       rightcommand
+              A  shell command to run that will receive its stdin
+              from the right channel.
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Greg Hewgill <a href="mailto:greg@hewgill.com">&lt;greg@hewgill.com&gt;</a>
+       <a href="http://hewgill.com">http://hewgill.com</a>
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+       <B><A HREF="splitter.html">splitter(1)</A></B>
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+<!--#include virtual="/google-analytics.inc"-->
+</BODY>
+</HTML>

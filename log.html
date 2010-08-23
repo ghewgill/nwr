@@ -1,0 +1,56 @@
+<HTML>
+<HEAD>
+<TITLE>log.1 manual page</TITLE>
+</HEAD>
+<BODY>
+<H1>log.1 manual page</H1>
+<HR>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+       log - write a stream to a rotating log file
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+       <B>log</B> <I>dir</I>
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       <B>log</B>  reads  a stream from its stdin, and writes the stream
+       to a file in the specified <I>dir</I>.
+
+       Every hour, the current log file is closed, a new  one  is
+       opened, and an older log file is deleted.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+       dir    The  directory to which the log files will be writ-
+              ten.
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+       There is no way  to  change  the  rotation  interval  (one
+       hour),  the  number of log files that are kept (3), or the
+       log filenames used (NWR-*.raw).
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Greg Hewgill <a href="mailto:greg@hewgill.com">&lt;greg@hewgill.com&gt;</a>
+       <a href="http://hewgill.com">http://hewgill.com</a>
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+<!--#include virtual="/google-analytics.inc"-->
+</BODY>
+</HTML>
