@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 
 #include "eas_demod.h"
