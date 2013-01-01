@@ -39,8 +39,8 @@ insertdb_SOURCES = insertdb.cpp eas_decode.cpp
 
 eas_decode.cpp: fips.inc
 
-fips.inc: ../emwin/data/county.dump fips2inc.pl
-	perl fips2inc.pl ../emwin/data/county.dump >$@
+fips.inc: county.dump fips2inc.pl
+	perl fips2inc.pl county.dump >$@
 
 .1.html:
 	true rman -f html $< >$@
