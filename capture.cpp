@@ -303,8 +303,8 @@ int main(int argc, char *argv[])
         }
     }
     eas::Demodulator demodulator;
-    demodulator.activate.connect(SigC::slot(eas_activate));
-    demodulator.deactivate.connect(SigC::slot(eas_deactivate));
+    demodulator.activate.connect(sigc::ptr_fun(eas_activate));
+    demodulator.deactivate.connect(sigc::ptr_fun(eas_deactivate));
     for (;;) {
         char buf[4096];
         int n = fread(buf, 1, sizeof(buf), f);

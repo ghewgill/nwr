@@ -8,8 +8,8 @@ class Demodulator {
 public:
     Demodulator();
     void demod(const float *buf, int n);
-    SigC::Signal1<void, const char *> activate;
-    SigC::Signal0<void> deactivate;
+    sigc::signal1<void, const char *> activate;
+    sigc::signal0<void> deactivate;
 private:
     enum {CORRLEN = 18};
     enum {BPHASESTEP = (int)(0x10000/(1920e-6*11025))};

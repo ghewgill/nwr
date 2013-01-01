@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         }
     }
     eas::Demodulator demodulator;
-    demodulator.activate.connect(SigC::slot(eas_activate));
+    demodulator.activate.connect(sigc::ptr_fun(eas_activate));
     writeTitle();
     for (;;) {
         char buf[4096];

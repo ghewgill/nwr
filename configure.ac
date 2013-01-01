@@ -24,7 +24,7 @@ AC_CHECK_HEADER([pcre.h])
 # Checks for library functions.
 AC_PROG_GCC_TRADITIONAL
 
-PKG_CHECK_MODULES(SIGC, sigc++-1.2)
+PKG_CHECK_MODULES(SIGC, sigc++-2.0)
 # this is commented because insertdb depends on a very old version of libpq
 #PKG_CHECK_MODULES(PQ, pq)
 
