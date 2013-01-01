@@ -25,7 +25,8 @@ AC_CHECK_HEADER([pcre.h])
 AC_PROG_GCC_TRADITIONAL
 
 PKG_CHECK_MODULES(SIGC, sigc++-1.2)
-PKG_CHECK_MODULES(PQ, pq)
+# this is commented because insertdb depends on a very old version of libpq
+#PKG_CHECK_MODULES(PQ, pq)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

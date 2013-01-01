@@ -1,8 +1,9 @@
 CXXFLAGS = -g -Wall -Werror
-INCLUDES = @SIGC_CFLAGS@ @PQ_CFLAGS@
-LDADD = @SIGC_LIBS@ @PQ_LIBS@
+INCLUDES = @SIGC_CFLAGS@
+LDADD = @SIGC_LIBS@
 
-bin_PROGRAMS = rec play squelch encode capture plot log streamer splitter monitor demux emailer insertdb
+bin_PROGRAMS = rec play squelch encode capture plot log streamer splitter monitor demux emailer
+# note that 'insertdb' is omitted because it's currently written to work with a very old version of libpq
 
 htmldir = $(prefix)/html
 html_DATA = rec.html squelch.html capture.html log.html streamer.html splitter.html demux.html emailer.html insertdb.html
@@ -35,7 +36,7 @@ demux_SOURCES = demux.cpp
 
 emailer_SOURCES = emailer.cpp eas_decode.cpp
 
-insertdb_SOURCES = insertdb.cpp eas_decode.cpp
+#insertdb_SOURCES = insertdb.cpp eas_decode.cpp
 
 eas_decode.cpp: fips.inc
 
