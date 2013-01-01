@@ -15,8 +15,8 @@ static time_t mkgmtime(struct tm *tm)
 }
 
 struct Description {
-    char *abbr;
-    char *desc;
+    const char *abbr;
+    const char *desc;
 };
 
 static const Description Originators[] = {
