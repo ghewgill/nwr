@@ -1,0 +1,6 @@
+NWR/SAME Tools
+
+This suite of tools can process a US NOAA Weather Radio (NWR)
+audio stream and extract the encoded digital alert information.
+
+For more information, see: http://hewgill.com/nwr/
