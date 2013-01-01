@@ -4,6 +4,8 @@
 
 #include "eas_decode.h"
 
+using namespace std;
+
 static time_t mkgmtime(struct tm *tm)
 {
     static const int mdays[13] = {

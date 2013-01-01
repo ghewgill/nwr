@@ -4,6 +4,8 @@
 
 #include "eas_decode.h"
 
+using namespace std;
+
 const char *Station = NULL;
 PGconn *conn;
 
