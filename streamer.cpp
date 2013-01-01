@@ -21,7 +21,7 @@ using namespace std;
 
 const int BUFSIZE = 65536;
 
-struct {
+struct config_t {
     string ConfigFileName;
     string Server;
     int Port;
@@ -35,7 +35,9 @@ struct {
     string IRC;
     string AIM;
     string ICQ;
-} Config = {
+};
+
+config_t Config = {
     "",
     "localhost",
     8001,
