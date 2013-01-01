@@ -97,7 +97,7 @@ void email(const eas::Message &message, const char fn[])
         FILE *f = fdopen(pipeout[1], "w");
         if (f != NULL) {
             char boundary[80];
-            snprintf(boundary, sizeof(boundary), "%08x.%d", time(0), getpid());
+            snprintf(boundary, sizeof(boundary), "%08x.%d", (unsigned int)time(0), getpid());
             fprintf(f, "To: %s\n", From);
             fprintf(f, "From: %s\n", From);
             string name = fn;

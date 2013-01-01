@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
                 exit(1);
             }
             if (w < n) {
-                fprintf(stderr, "short write: %d < %d\n", w, n);
+                fprintf(stderr, "short write: %d < %d\n", (int)w, (int)n);
                 exit(1);
             }
         }
