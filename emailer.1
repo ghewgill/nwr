@@ -1,0 +1,32 @@
+.TH emailer 1 "March 2003"
+.SH NAME
+emailer \- email EAS alerts
+.SH SYNOPSIS
+.B emailer [-f
+.I from-address
+.B ] [-n
+.I notify-file
+.B ]
+.I code filename
+.SH DESCRIPTION
+.B emailer
+prepares a formatted email message from a given EAS code
+and MP3 file, and sends it to a list of addresses specified in
+.IR notify-file .
+.SH OPTIONS
+.IP "-f from-address"
+The email address used in the From: line.
+This address is also used in the To: line.
+.IP "-n notify-file"
+A file containing a list of email addresses,
+or shell commands preceded by |.
+.IP code
+The EAS header code for this message.
+.IP filename
+The name of the MP3 file containing the alert message.
+.SH AUTHOR
+Greg Hewgill <greg@hewgill.com>
+.br
+http://www.hewgill.com
+.SH "SEE ALSO"
+.BR capture (1)
